@@ -1,2 +1,2 @@
 # labassist-api
-Backnd component of the LabAssist application
+Backend component of the LabAssist application
