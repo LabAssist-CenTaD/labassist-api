@@ -1,2 +1,2 @@
-# labassist-api
-Backend component of the LabAssist application
+# labassist
+AI-powered analysis tools for scientific experiments
