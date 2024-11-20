@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <input type="file" name="file" id="file">
+    <button id="submit">Submit</button>
+    <script>
+        document.getElementById('submit').addEventListener('click', function() {
+            var fileInput = document.querySelector('input[type="file"]');
+            if (fileInput.files.length > 0) {
+                var file = fileInput.files[0];
+                var formdata = new FormData();
+                formdata.append("video", file); // Ensure the name matches the Flask route
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', 'http://localhost:5000/upload', true);
+                xhr.onload = function() {
+                    if (xhr.status === 201) {
+                        console.log("File uploaded successfully");
+                    } else {
+                        console.error("Error uploading file:", xhr.responseText);
+                    }
+                };
+                xhr.send(formdata);
+            } else {
+                console.log("No file selected.");
+            }
+        });
+    </script>
+</body>
+</html>
