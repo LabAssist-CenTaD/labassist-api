@@ -6,4 +6,4 @@ https://www.erlang.org/downloads
 https://www.rabbitmq.com/docs/install-windows
 
 
-celery -A tasks worker --loglevel=info --pool=gevent --concurrency=8
+celery -A run.celery_app worker --loglevel=info --pool=gevent --concurrency=8

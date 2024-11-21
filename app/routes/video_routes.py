@@ -1,22 +1,19 @@
 import os
-import cv2
-import math
-import time
-import mmap
-
-import numpy as np
 from flask import Blueprint, jsonify, request, session, current_app
 from werkzeug.utils import secure_filename
+from celery.result import GroupResult
 
-from app.utils.celery_tasks import celery_init_app, example_task, process_video_clip
+from app.services.video_analysis import analyze_clip, get_task_status
 
 video_routes = Blueprint('video_routes', __name__)
+
+# A workaround to store task IDs in the session as the save and restore methods are not working
+task_dict = {}
 
 @video_routes.route('/upload', methods=['POST'])
 def upload_video():
     file = request.files['video']
     if file and file.filename.endswith(('.mp4', '.mov', '.avi', '.MOV')):
-        start_time = time.time()
         filename = secure_filename(file.filename)
         uploads_folder = current_app.config['UPLOAD_FOLDER']
         os.makedirs(uploads_folder, exist_ok=True)
@@ -27,28 +24,7 @@ def upload_video():
         if 'videos' not in session:
             session['videos'] = []
         session['videos'].append(filename)
-        
-        print('Video uploaded in', time.time() - start_time, 'seconds')
-        start_time = time.time()
-        mmap_file = current_app.config['UPLOAD_FOLDER'] / f'{filename}.mmap'
-        with open(current_app.config['UPLOAD_FOLDER'] / filename, 'r+b') as f:
-            mm = mmap.mmap(f.fileno(), 0)
-            with open(mmap_file, 'wb') as mmf:
-                mmf.write(mm)
-                
-        # run object detection on every 4 seconds of the video
-        interval = 4
-        cap = cv2.VideoCapture(str(mmap_file))
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        print(f'frame count: {frame_count}, fps: {fps}')
-        for i in range(0, frame_count, int(interval * fps)):
-            print(f'extracting clip {i // int(interval * fps) + 1}/{math.ceil(frame_count / int(interval * fps))}', end='\r')
-            start_frame = i
-            end_frame = min(i + int(interval * fps), frame_count)
-            process_video_clip.delay(str(mmap_file), start_frame, end_frame)
 
-        print('Video extracted in', time.time() - start_time, 'seconds')
         return jsonify({'message': 'Video uploaded successfully'}), 201
     else:
         print('Invalid file format')
@@ -56,7 +32,6 @@ def upload_video():
 
 @video_routes.route('/process_video/<clip_name>', methods=['GET'])
 def process_video(clip_name):
-    # if 'videos' not in session or clip_name not in session['videos']:
     if clip_name not in os.listdir(current_app.config['UPLOAD_FOLDER']):
         return jsonify(
             {
@@ -64,32 +39,19 @@ def process_video(clip_name):
                 'available_videos': session.get('videos', [])
             }
         ), 404
-    # convert video to memory mapped file
-    start_time = time.time()
-    mmap_file = current_app.config['UPLOAD_FOLDER'] / f'{clip_name}.mmap'
-    with open(current_app.config['UPLOAD_FOLDER'] / clip_name, 'r+b') as f:
-        mm = mmap.mmap(f.fileno(), 0)
-        with open(mmap_file, 'wb') as mmf:
-            mmf.write(mm)
-            
-    # run object detection on every 4 seconds of the video
-    interval = 4
-    cap = cv2.VideoCapture(str(mmap_file))
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    print(f'frame count: {frame_count}, fps: {fps}')
-    for i in range(0, frame_count, int(interval * fps)):
-        print(f'extracting clip {i // int(interval * fps) + 1}/{math.ceil(frame_count / int(interval * fps))}', end='\r')
-        start_frame = i
-        end_frame = min(i + int(interval * fps), frame_count)
-        process_video_clip.delay(str(mmap_file), start_frame, end_frame)
+    print(f'Processing video {clip_name}')
+    task_result = analyze_clip(clip_name, cleanup=current_app.config['CLEANUP_UPLOADS'])
+    task_dict[clip_name] = task_result
+    return jsonify({'task_id': task_result.id}), 202
 
-    print('Video extracted in', time.time() - start_time, 'seconds')
-    return jsonify({'message': 'Video processed successfully'}), 200
-
-@video_routes.route('/example_task', methods=['GET'])
-def run_example_task():
-    print('Running example task')
-    result = example_task.delay(42)
-    print('Task ID:', result.id)
-    return jsonify({'task_id': result.id}), 200
+@video_routes.route('/get_task_status/<clip_name>', methods=['GET'])
+def get_task_status_route(clip_name):
+    if 'tasks' not in session or clip_name not in session['tasks']:
+        return jsonify(
+            {
+                'message': 'No tasks found for this video',
+                'available_videos': list(session.get('tasks', {}).keys())
+            }
+        ), 404
+    task_status = get_task_status(task_dict[clip_name])
+    return jsonify(task_status), 200

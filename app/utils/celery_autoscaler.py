@@ -60,25 +60,3 @@ class DAAutoscaler(CeleryAutoscaler):
                         int(self.re_total.search(mem).group("total")))
         else:
             return psutil.virtual_memory().percent / 100
-        
-if __name__ == "__main__":
-    # create an example task that uses a lot of GPU
-    app = Celery("example")
-    app.conf.update(
-        broker_url="redis://localhost:6379/0",
-        result_backend="redis://localhost:6379/0",
-    )
-    
-    @app.task
-    def example_task():
-        import torch
-        torch.zeros(1000, 1000).cuda()
-        logging.info("example_task done")
-        
-    # start the autoscaler
-    autoscaler = CeleryAutoscaler(app, max_concurrency=4)
-    autoscaler.start()
-    
-    # start the example task
-    for _ in range(10):
-        example_task.delay()
