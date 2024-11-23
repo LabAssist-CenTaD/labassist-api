@@ -13,6 +13,7 @@ def create_app() -> Flask:
             broker_url=app.config['CELERY_BROKER_URL'],
             result_backend=app.config['CELERY_RESULT_BACKEND'],
             task_ignore_result=True,
+            broker_connection_retry_on_startup=True,
         ),
     )
     app.register_blueprint(video_routes)

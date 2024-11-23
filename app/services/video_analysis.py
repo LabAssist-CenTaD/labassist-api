@@ -7,7 +7,6 @@ from celery import group
 from celery.result import AsyncResult, GroupResult
 from app.utils.celery_tasks import process_video_clip
 
-
 def analyze_clip(clip_path, interval=4, cleanup=True) -> GroupResult:
     """Function to start the analysis process of a video clip.
 
@@ -38,6 +37,7 @@ def analyze_clip(clip_path, interval=4, cleanup=True) -> GroupResult:
         end_frame = min(i + int(interval * fps), frame_count)
         result = process_video_clip.s(str(mmap_file), start_frame, end_frame)
         results.append(result)
+        # break #TODO: remove this line to process the entire video
     task_group = group(results)
     result = task_group.apply_async()
     

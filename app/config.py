@@ -9,4 +9,6 @@ class Config:
     
     SECRET_KEY = 'secret'
     
+    ACTION_MODEL_PATH = Path(r'C:\Users\zedon\Documents\GitHub\labassist-api\checkpoints\best\epoch=5-acc=0.8500000238418579.ckpt')
+    OBJECT_MODEL_PATH = Path(r'app\ml_models\object_detection\weights\obj_detect_best_v5.pt')
     
