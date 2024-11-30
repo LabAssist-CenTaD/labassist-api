@@ -25,7 +25,7 @@ video_transform = Compose([
 
 def load_model(model_path):
     model = ActionDetectionModel()
-    model.load_state_dict(torch.load(model_path, weights_only=True)['state_dict'])
+    model.load_state_dict(torch.load(model_path, weights_only=True)) #['state_dict']
     model.eval()
     return model
 

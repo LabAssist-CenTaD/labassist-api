@@ -1,5 +1,6 @@
 uploads
 lightning_logs
+checkpoints
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -31,7 +31,7 @@ checkpoint_callback = ModelCheckpoint(
 lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
 trainer = Trainer(
-    max_epochs = 10,
+    max_epochs = 200,
     accelerator = 'gpu',
     devices = -1, #-1
     precision = '16-mixed', # 16
@@ -45,10 +45,10 @@ if __name__ == '__main__':
     train_loader = train_dataloader(dataset_path / 'train', batch_size=16, num_workers=0)
     val_loader = test_dataloader(dataset_path / 'val', batch_size=16, num_workers=0)
     test_loader = test_dataloader(dataset_path / 'test', batch_size=16, num_workers=0)
-    
-    # trainer.fit(model, train_loader, val_loader) #ckpt_path='checkpoints/last.ckpt'
+    ckpt_path = r'C:\Users\zedon\Documents\GitHub\labassist-api\checkpoints\best\epoch=199-acc=0.8799999952316284.ckpt'
+    # trainer.fit(model, train_loader, val_loader, ckpt_path=ckpt_path) #ckpt_path='checkpoints/last.ckpt'
     # trainer.validate(model)
-    # model.load_state_dict(torch.load('model.pth', weights_only=True))
-    trainer.test(model, test_loader, ckpt_path=r'checkpoints\best\epoch=5-acc=0.8500000238418579.ckpt')
+    # model.load_state_dict(torch.load(ckpt_path, weights_only=True)['state_dict'])
+    trainer.test(model, test_loader, ckpt_path=ckpt_path)
 
-    # torch.save(model.state_dict(), 'model-v2.pth')
+    # torch.save(model.state_dict(), 'model-v1.pth')
