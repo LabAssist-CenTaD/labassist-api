@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <title>Document</title>
 </head>
 <body>
     <input type="file" name="file" id="file">
     <button id="submit">Submit</button>
+    <div id="updates"></div>    
     <script>
         document.getElementById('submit').addEventListener('click', function() {
             var fileInput = document.querySelector('input[type="file"]');
@@ -28,6 +30,20 @@
             } else {
                 console.log("No file selected.");
             }
+        });
+        const socket = io('http://localhost:5000');  // Connect to the WebSocket server
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('update', (data) => {
+            const updatesDiv = document.getElementById('updates');
+            updatesDiv.innerHTML = `<p>Current number: ${data.number}</p>`;  // Display unique number updates
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
         });
     </script>
 </body>

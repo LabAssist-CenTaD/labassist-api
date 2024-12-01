@@ -1,11 +1,12 @@
 import subprocess
 from flask_cors import CORS
 from flask import Flask, session
+from flask_socketio import SocketIO
 
 from app.routes.video_routes import video_routes
 from app.utils.celery_tasks import celery_init_app, example_task
 
-def create_app() -> Flask:
+def create_app() -> tuple[SocketIO, Flask]:
     app = Flask(__name__)
     app.config.from_object('app.config.Config')
     app.config.from_mapping(
@@ -30,6 +31,12 @@ def create_app() -> Flask:
     celery_app
     app.extensions['celery'] = celery_app
     
+    socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
+    from app.routes import socket_events
+    socket_events.init_socketio(socketio)
+    
+    
+    
     # @app.teardown_appcontext
     # def remove_session(exception=None):
     #     # delete all videos in session from the uploads folder
@@ -40,4 +47,4 @@ def create_app() -> Flask:
     #     session.pop('videos', None)
     #     print('Session removed')
     
-    return app
+    return socketio, app

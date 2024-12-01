@@ -6,6 +6,7 @@ from flask import current_app
 from celery import group
 from celery.result import AsyncResult, GroupResult
 from app.utils.celery_tasks import process_video_clip
+from app.utils.progress_chord import ProgressChord
 
 def analyze_clip(clip_path, interval=4, cleanup=True) -> GroupResult:
     """Function to start the analysis process of a video clip.
@@ -39,7 +40,8 @@ def analyze_clip(clip_path, interval=4, cleanup=True) -> GroupResult:
         results.append(result)
         # break #TODO: remove this line to process the entire video
     task_group = group(results)
-    result = task_group.apply_async()
+    # result = task_group.apply_async()
+    result = ProgressChord(task_group)(process_results)
     
     if cleanup:
         # cleanup uploads folder
@@ -59,17 +61,22 @@ def get_task_status(result: GroupResult) -> dict:
     
         task_status (dict): A dictionary containing the status of the tasks.
     """
-    if result.ready():
-        return {
-            'ready': result.ready(),
-            'successful': result.successful(),
-        }
-    else:
-        completed = result.completed_count()
-        total = len(result.results)
-        return {
-            'ready': result.ready(),
-            'successful': False,
-            'progress': math.ceil((completed / total) * 100),
-        }
+    print(result)
+    # if result.ready():
+    #     return {
+    #         'ready': result.ready(),
+    #         'successful': result.successful(),
+    #     }
+    # else:
+    #     completed = result.completed_count()
+    #     total = len(result.results)
+    #     return {
+    #         'ready': result.ready(),
+    #         'successful': False,
+    #         'progress': math.ceil((completed / total) * 100),
+    #     }
+    return {}
+def process_results(results):
+    print('Processing results')
+    print(results)
 

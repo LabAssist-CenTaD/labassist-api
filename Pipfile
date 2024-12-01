@@ -27,6 +27,8 @@ scikit-learn = "*"
 pytorchvideo = {git = "https://github.com/facebookresearch/pytorchvideo.git"}
 matplotlib = "*"
 ultralytics = "*"
+flask-socketio = "*"
+gevent-websocket = "*"
 
 [dev-packages]
 

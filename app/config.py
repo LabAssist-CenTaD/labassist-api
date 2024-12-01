@@ -7,6 +7,8 @@ class Config:
     CELERY_RESULT_BACKEND = 'db+sqlite:///results.db'
     CELERY_BROKER_URL = 'amqp://guest@localhost//'
     
+    SOCKETIO_MESSAGE_QUEUE = 'db+sqlite:///socketio.db'
+    
     SECRET_KEY = 'secret'
     
     ACTION_MODEL_PATH = Path(r'app\ml_models\action_detection\weights\model-v1.pth')
