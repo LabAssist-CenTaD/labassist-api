@@ -28,23 +28,12 @@ def create_app() -> tuple[SocketIO, Flask]:
         result_serializer='pickle',
         accept_content=['pickle']
     )
-    celery_app
     app.extensions['celery'] = celery_app
     
     socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
+    
+    # Import socket events to register them
     from app.routes import socket_events
     socket_events.init_socketio(socketio)
-    
-    
-    
-    # @app.teardown_appcontext
-    # def remove_session(exception=None):
-    #     # delete all videos in session from the uploads folder
-    #     if 'videos' in session:
-    #         for video in session['videos']:
-    #             video_path = app.config['UPLOAD_FOLDER'] / video
-    #             video_path.unlink(missing_ok=True)
-    #     session.pop('videos', None)
-    #     print('Session removed')
     
     return socketio, app

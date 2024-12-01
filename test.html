@@ -8,20 +8,30 @@
 </head>
 <body>
     <input type="file" name="file" id="file">
-    <button id="submit">Submit</button>
+    <button type="button" id="submit">Submit</button>
+    <button id="process">Process</button>
+    <p id="identifier"></p>
     <div id="updates"></div>    
     <script>
-        document.getElementById('submit').addEventListener('click', function() {
+        const socket = io('http://localhost:5000'); 
+        let active_video = null;
+
+        document.getElementById('submit').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the default form submission behavior
             var fileInput = document.querySelector('input[type="file"]');
             if (fileInput.files.length > 0) {
                 var file = fileInput.files[0];
                 var formdata = new FormData();
-                formdata.append("video", file); // Ensure the name matches the Flask route
+                formdata.append("id", deviceId); 
+                formdata.append("video", file); 
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', 'http://localhost:5000/upload', true);
                 xhr.onload = function() {
                     if (xhr.status === 201) {
                         console.log("File uploaded successfully");
+                        // console.log("Response:", xhr.responseText);
+                        // const response = JSON.parse(xhr.responseText);
+                        // active_video = response.filename;
                     } else {
                         console.error("Error uploading file:", xhr.responseText);
                     }
@@ -31,7 +41,28 @@
                 console.log("No file selected.");
             }
         });
-        const socket = io('http://localhost:5000');  // Connect to the WebSocket server
+
+        document.getElementById('process').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent the default form submission behavior
+            if (!active_video) {
+                console.error("No active video to process.");
+                return;
+            }
+            const clientId = deviceId; // Use the deviceId as the client_id
+            const url = `http://localhost:5000/process_video/${active_video}?client_id=${clientId}`;
+            
+            fetch(url, {
+                method: 'GET'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Process video response:', data);
+            })
+            .catch(error => {
+                console.error('Error processing video:', error);
+            });
+        });
+
 
         socket.on('connect', () => {
             console.log('Connected to server');
@@ -39,12 +70,37 @@
 
         socket.on('update', (data) => {
             const updatesDiv = document.getElementById('updates');
-            updatesDiv.innerHTML = `<p>Current number: ${data.number}</p>`;  // Display unique number updates
+            updatesDiv.innerHTML = `<p>Current number: ${data.number}</p>`; 
         });
 
         socket.on('disconnect', () => {
             console.log('Disconnected from server');
         });
+
+        // Function to get a cookie value by name
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // Function to set a cookie
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));  // Expiration in days
+            document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/`;
+        }
+
+        // Check if the device_id cookie exists
+        let deviceId = getCookie('device_id');
+        if (!deviceId) {
+            // Generate a new UUID if it doesn't exist
+            deviceId = crypto.randomUUID();
+            setCookie('device_id', deviceId, 365);  // Cookie expires in 1 year
+        }
+
+        // Display the device ID
+        document.getElementById('identifier').innerText = `Device ID: ${deviceId}`;
     </script>
 </body>
 </html>
