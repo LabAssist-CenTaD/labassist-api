@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request, session, current_app
 from werkzeug.utils import secure_filename
 from celery.result import GroupResult
 from flask_socketio import emit
+import jsonpatch
 
 from app.services.video_analysis import analyze_clip, get_task_status
 
@@ -26,7 +27,12 @@ def upload_video():
         session['videos'].append(filename)
         
         patch = vjm.add_video(client_id, filename, file_path)
-        current_app.extensions['socketio'].emit('create_patch', {'data': patch}, room=client_id)
+        if isinstance(patch, jsonpatch.JsonPatch):
+            current_app.extensions['socketio'].emit('create_patch', {'data': patch}, room=client_id)
+        else:
+            print(patch['message'])
+            current_app.extensions['socketio'].emit('message', {'data': patch['message']}, room=client_id)
+            return jsonify(patch), 400
 
         return jsonify({
             'message': 'Video uploaded successfully',
