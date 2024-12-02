@@ -28,7 +28,7 @@ def init_socketio(socketio_instance: SocketIO):
             vjm = current_app.extensions['vjm']
             emit('authentication_success', {'data': 'Authenticated!', 'cached_videos': vjm.get_client_videos(client_id)}, room=client_id)
         else:
-            emit('message', {'data': 'Authentication failed!'})
+            emit('message', {'data': 'Authentication failed. No client ID provided.'})
         
     @socketio.on('button_click')
     def handle_button_click(data):
