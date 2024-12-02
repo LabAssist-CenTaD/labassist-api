@@ -2,9 +2,12 @@ import subprocess
 from flask_cors import CORS
 from flask import Flask, session
 from flask_socketio import SocketIO
+from flask_sqlalchemy import SQLAlchemy
 
 from app.routes.video_routes import video_routes
-from app.utils.celery_tasks import celery_init_app, example_task
+from app.utils.celery_tasks import celery_init_app
+
+db = SQLAlchemy()
 
 def create_app() -> tuple[SocketIO, Flask]:
     app = Flask(__name__)
@@ -17,6 +20,11 @@ def create_app() -> tuple[SocketIO, Flask]:
             broker_connection_retry_on_startup=True,
         ),
     )
+    
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
+        
     app.register_blueprint(video_routes)
     
     CORS(app)
@@ -31,8 +39,6 @@ def create_app() -> tuple[SocketIO, Flask]:
     app.extensions['celery'] = celery_app
     
     socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
-    
-    # Import socket events to register them
     from app.routes import socket_events
     socket_events.init_socketio(socketio)
     

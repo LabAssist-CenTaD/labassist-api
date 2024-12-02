@@ -12,20 +12,6 @@ from app.utils.object_detection_utils import get_valid_flask, square_crop
 object_model = YOLO(Config.OBJECT_MODEL_PATH)
 action_model = load_model(Config.ACTION_MODEL_PATH)
 
-def celery_init_app(app: Flask) -> Celery:
-    class FlaskTask(Task):
-        def __call__(self, *args: object, **kwargs: object) -> object:
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    celery_app = Celery(app.name, task_cls=FlaskTask)
-    celery_app.config_from_object(app.config["CELERY"])
-    celery_app.set_default()
-    app.extensions["celery"] = celery_app
-    
-    return celery_app
-
-@shared_task(ignore_result=False)
 def process_video_clip(clip_path: str, start_frame: int, end_frame: int) -> np.ndarray:
     cap = cv2.VideoCapture(str(clip_path))
     cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
@@ -53,5 +39,4 @@ def process_video_clip(clip_path: str, start_frame: int, end_frame: int) -> np.n
     else:
         return None
     
-    
-    
+print(process_video_clip(r"C:\Users\zedon\Videos\PW2024VIDEOS\clips\output\train\correct\correct-2.mp4", 0, 4))

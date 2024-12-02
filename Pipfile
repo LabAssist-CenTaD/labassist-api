@@ -29,6 +29,8 @@ matplotlib = "*"
 ultralytics = "*"
 flask-socketio = "*"
 gevent-websocket = "*"
+flask-sqlalchemy = "*"
+jsonpatch = "*"
 
 [dev-packages]
 

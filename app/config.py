@@ -1,6 +1,8 @@
 from pathlib import Path
 
 class Config:
+    DEBUG_MODE = True
+    
     UPLOAD_FOLDER = Path('uploads')
     CLEANUP_UPLOADS = False
     
@@ -8,6 +10,9 @@ class Config:
     CELERY_BROKER_URL = 'amqp://guest@localhost//'
     
     SOCKETIO_MESSAGE_QUEUE = 'db+sqlite:///socketio.db'
+    
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///annotations.db'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     SECRET_KEY = 'secret'
     

@@ -43,15 +43,16 @@ def process_video(clip_name):
     client_id = request.args.get('client_id')
     if not client_id:
         return jsonify({'message': 'Client ID is required'}), 400
-
-    if clip_name not in os.listdir(current_app.config['UPLOAD_FOLDER']) or clip_name not in task_dict[client_id]:
+    elif client_id not in task_dict:
+        return jsonify({'message': 'Client ID not found'}), 404
+    elif clip_name not in os.listdir(current_app.config['UPLOAD_FOLDER']) or clip_name not in task_dict[client_id]:
         return jsonify(
             {
                 'message': 'Video not found or session expired. Please upload the video again',
                 'available_videos': list(task_dict.get(client_id, {}).keys())
             }
         ), 404
-
+        
     print(f'Processing video {clip_name} for client {client_id}')
     task_result = analyze_clip(clip_name, cleanup=current_app.config['CLEANUP_UPLOADS'])
     task_dict[client_id][clip_name] = task_result

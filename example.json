@@ -1,0 +1,19 @@
+[
+    {
+        "fileName": "titration_1.mp4",
+        "filePath": "C:/Users/LabAssist/2024/Practicals/Titration/24S6X/titration_1.mp4",
+        "status_list": ["Complete", "Errors Found"],
+        "annotations": [
+        {
+            "status": "incorrect",
+            "message": "White tile not under conical flask when titrating",
+            "timestamp": "00:01:24"
+        }
+        ],
+        "status_counts": {
+        "correct": 0,
+        "warning": 0,
+        "error": 0
+        }
+    }
+]
