@@ -14,6 +14,8 @@ class Config:
     SQLALCHEMY_DATABASE_URI = 'sqlite:///annotations.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    VIDEO_JSON_PATH = Path('video_json.json')
+    
     SECRET_KEY = 'secret'
     
     ACTION_MODEL_PATH = Path(r'app\ml_models\action_detection\weights\model-v1.pth')

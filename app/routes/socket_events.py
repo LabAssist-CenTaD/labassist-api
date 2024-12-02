@@ -19,24 +19,29 @@ def init_socketio(socketio_instance: SocketIO):
     def handle_disconnect():
         print('Client disconnected')
         
+    @socketio.on('authenticate')
+    def handle_authenticate(data):
+        print(f'Authenticating: {data}')
+        if 'client_id' in data:
+            client_id = data['client_id']
+            join_room(client_id)
+            emit('message', {'data': 'Authenticated!'}, room=client_id)
+        else:
+            emit('message', {'data': 'Authentication failed!'})
+        
     @socketio.on('button_click')
     def handle_button_click(data):
         print(f'Button clicked: {data}')
         emit('message', {'data': 'Button clicked!'})
         
-    @socketio.on('upload')
-    def handle_upload(data):
-        print(f'Uploading file: {data}')
-        try:
-            filename = secure_filename(data['filename'])
-            uploads_folder = current_app.config['UPLOAD_FOLDER']
-            os.makedirs(uploads_folder, exist_ok=True)
-            # file_path = os.path.join(uploads_folder, filename)
-            # with open(file_path, 'wb') as f:
-            #     f.write(data['video'])
-            emit('upload_response', {'status': 'success'})
-        except Exception as e:
-            emit('upload_response', {'status': 'error', 'message': str(e)})
+    @socketio.on('apply_patch')
+    def handle_apply_patch(data):
+        print(f'Applying patch: {data}')
+        client_id = data['client_id']
+        patch = data['patch']
+        vjm = current_app.extensions['vjm']
+        result = vjm.apply_patch(client_id, patch)
+        emit('update', {'data': result}, room=client_id)
 
     def background_task():
         while True:

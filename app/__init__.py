@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from app.routes.video_routes import video_routes
 from app.utils.celery_tasks import celery_init_app
+from app.services.video_json_manager import VideoJSONManager
 
 db = SQLAlchemy()
 
@@ -25,6 +26,9 @@ def create_app() -> tuple[SocketIO, Flask]:
     with app.app_context():
         db.create_all()
         
+    vjm = VideoJSONManager(json_path=app.config['VIDEO_JSON_PATH'])
+    app.extensions['vjm'] = vjm
+        
     app.register_blueprint(video_routes)
     
     CORS(app)
@@ -41,5 +45,6 @@ def create_app() -> tuple[SocketIO, Flask]:
     socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
     from app.routes import socket_events
     socket_events.init_socketio(socketio)
+    app.extensions['socketio'] = socketio
     
     return socketio, app

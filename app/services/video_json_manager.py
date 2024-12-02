@@ -2,7 +2,7 @@ import json
 import jsonpatch
 from copy import deepcopy
 
-class VideoJsonManager:
+class VideoJSONManager:
     def __init__(self, json_path: str, video_json: dict = {}):
         self.video_json = video_json
         self.json_path = json_path
@@ -144,7 +144,7 @@ class VideoJsonManager:
     
 if __name__ == '__main__':
     json_path = 'video_data.json'
-    vjm = VideoJsonManager(json_path)
+    vjm = VideoJSONManager(json_path)
     print(vjm.add_video("client1", "video2.mp4", "/path/to/video2.mp4"))
     print(vjm.add_annotation("client1", "video2.mp4", "warning", "This is a warning", "00:00:05"))
     print(vjm.clear_annotations("client1", "video2.mp4"))
