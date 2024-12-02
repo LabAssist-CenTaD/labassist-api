@@ -25,7 +25,8 @@ def init_socketio(socketio_instance: SocketIO):
         if 'client_id' in data:
             client_id = data['client_id']
             join_room(client_id)
-            emit('message', {'data': 'Authenticated!'}, room=client_id)
+            vjm = current_app.extensions['vjm']
+            emit('authentication_success', {'data': 'Authenticated!', 'cached_videos': vjm.get_client_videos(client_id)}, room=client_id)
         else:
             emit('message', {'data': 'Authentication failed!'})
         

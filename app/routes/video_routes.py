@@ -26,9 +26,9 @@ def upload_video():
             session['videos'] = []
         session['videos'].append(filename)
         
-        patch = vjm.add_video(client_id, filename, file_path)
+        patch = vjm.add_video(client_id, filename, str(file_path))
         if isinstance(patch, jsonpatch.JsonPatch):
-            current_app.extensions['socketio'].emit('create_patch', {'data': patch}, room=client_id)
+            current_app.extensions['socketio'].emit('create_patch', patch.to_string(), room=client_id)
         else:
             print(patch['message'])
             current_app.extensions['socketio'].emit('message', {'data': patch['message']}, room=client_id)

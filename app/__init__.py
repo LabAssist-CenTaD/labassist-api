@@ -27,6 +27,7 @@ def create_app() -> tuple[SocketIO, Flask]:
         db.create_all()
         
     vjm = VideoJSONManager(json_path=app.config['VIDEO_JSON_PATH'])
+    vjm.load_json()
     app.extensions['vjm'] = vjm
         
     app.register_blueprint(video_routes)

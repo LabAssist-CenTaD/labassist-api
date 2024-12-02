@@ -77,6 +77,14 @@
             console.log('Disconnected from server');
         });
 
+        socket.on('message', (data) => {
+            console.log('Message from server:', data);
+        });
+
+        socket.on('authentication_success', (data) => {
+            console.log('Authentication success:', data);
+        });
+
         // Function to get a cookie value by name
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -98,6 +106,7 @@
             deviceId = crypto.randomUUID();
             setCookie('device_id', deviceId, 365);  // Cookie expires in 1 year
         }
+        socket.emit('authenticate', {"client_id": deviceId});  // Send the device ID to the server
 
         // Display the device ID
         document.getElementById('identifier').innerText = `Device ID: ${deviceId}`;

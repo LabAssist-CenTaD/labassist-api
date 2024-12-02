@@ -3,7 +3,7 @@ import jsonpatch
 from copy import deepcopy
 
 class VideoJSONManager:
-    def __init__(self, json_path: str, video_json: dict = {}):
+    def __init__(self, json_path: str, video_json: dict = None):
         self.video_json = video_json
         self.json_path = json_path
         self.video_template = {
@@ -22,6 +22,8 @@ class VideoJSONManager:
             "message": None,
             "timestamp": "00:00:00"
         }
+        if video_json is None:
+            self.video_json = self.load_json()
         
     def add_client(self, client_id: str) -> jsonpatch.JsonPatch:
         if client_id not in self.video_json:
@@ -143,11 +145,12 @@ class VideoJSONManager:
         return f"VideoJsonManager({self.video_json}, {self.json_path})"
     
 if __name__ == '__main__':
-    json_path = 'video_data.json'
+    json_path = 'video_json.json'
     vjm = VideoJSONManager(json_path)
-    print(vjm.add_video("client1", "video2.mp4", "/path/to/video2.mp4"))
-    print(vjm.add_annotation("client1", "video2.mp4", "warning", "This is a warning", "00:00:05"))
-    print(vjm.clear_annotations("client1", "video2.mp4"))
-    print(vjm.remove_video("client1", "video2.mp4"))
-    print(vjm.remove_client("client1"))
+    print(vjm)
+    # print(vjm.add_video("client1", "video2.mp4", "/path/to/video2.mp4"))
+    # print(vjm.add_annotation("client1", "video2.mp4", "warning", "This is a warning", "00:00:05"))
+    # print(vjm.clear_annotations("client1", "video2.mp4"))
+    # print(vjm.remove_video("client1", "video2.mp4"))
+    # print(vjm.remove_client("client1"))
     
