@@ -104,7 +104,7 @@ class VideoJSONManager:
     
     def get_client_videos(self, client_id: str) -> list[dict]:
         if client_id not in self.video_json:
-            return {"message": f"Client ID {client_id} not found"}
+            return []
         return self.video_json[client_id]
     
     def get_all_videos(self) -> dict:

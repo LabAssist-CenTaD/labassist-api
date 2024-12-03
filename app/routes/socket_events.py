@@ -26,16 +26,16 @@ def init_socketio(socketio_instance: SocketIO):
             client_id = data['client_id']
             join_room(client_id)
             vjm = current_app.extensions['vjm']
-            emit('authentication_success', {'data': 'Authenticated!', 'cached_videos': vjm.get_client_videos(client_id)}, room=client_id)
+            return "OK", {'data': 'Authenticated!', 'cached_videos': vjm.get_client_videos(client_id)}
         else:
-            emit('message', {'data': 'Authentication failed. No client ID provided.'})
+            return "ERROR", {'data': 'Client ID not provided', 'cached_videos': []}
         
     @socketio.on('button_click')
     def handle_button_click(data):
         print(f'Button clicked: {data}')
         emit('message', {'data': 'Button clicked!'})
         
-    @socketio.on('apply_patch')
+    @socketio.on('patch_backend')
     def handle_apply_patch(data):
         print(f'Applying patch: {data}')
         client_id = data['client_id']
