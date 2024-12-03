@@ -22,7 +22,7 @@
             if (fileInput.files.length > 0) {
                 var file = fileInput.files[0];
                 var formdata = new FormData();
-                formdata.append("id", deviceId); 
+                formdata.append("device_id", deviceId); 
                 formdata.append("video", file); 
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', 'http://localhost:5000/upload', true);
@@ -49,7 +49,7 @@
                 return;
             }
             const clientId = deviceId; // Use the deviceId as the client_id
-            const url = `http://localhost:5000/process_video/${active_video}?client_id=${clientId}`;
+            const url = `http://localhost:5000/process_video/${active_video}?device_id=${clientId}`;
             
             fetch(url, {
                 method: 'GET'
@@ -66,7 +66,7 @@
 
         socket.on('connect', () => {
             console.log('Connected to server');
-            socket.emit('authenticate', { "client_id": deviceId }, (status, data) => {
+            socket.emit('authenticate', { "device_id": deviceId }, (status, data) => {
                 console.log('Response:', status, data);
             });
         });

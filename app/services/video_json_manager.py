@@ -8,12 +8,12 @@ class VideoJSONManager:
         self.video_json = video_json
         self.json_path = json_path
         self.video_template = {
-            "fileName": None,
-            "filePath": None,
+            "file_name": None,
+            "file_path": None,
             "status_list": [],
             "annotations": [],
             "status_counts": {
-                "correct": 0,
+                "info": 0,
                 "warning": 0,
                 "error": 0
             }
@@ -25,118 +25,159 @@ class VideoJSONManager:
         }
         if video_json is None:
             self.video_json = self.load_json()
+            if 'videos' not in self.video_json:
+                self.video_json['videos'] = {}
+            if 'active_tasks' not in self.video_json:
+                self.video_json['active_tasks'] = {}
             
-    def sync_videos(self, video_dir: str) -> jsonpatch.JsonPatch:
-        old_json = deepcopy(self.video_json)
-        for client_id in self.video_json:
-            for video in self.video_json[client_id]:
-                if not os.path.exists(os.path.join(video_dir, video["fileName"])):
-                    self.video_json[client_id].remove(video)
+    def sync_videos(self, video_dir: str) -> None:
+        for device_id in self.video_json['videos']:
+            for video in self.video_json['videos'][device_id]:
+                if not os.path.exists(os.path.join(video_dir, device_id, video["file_name"])):
+                    self.video_json['videos'][device_id].remove(video)
         self.save_json()
-        return self.create_patch(old_json, self.video_json)
         
-    def add_client(self, client_id: str) -> jsonpatch.JsonPatch:
-        if client_id not in self.video_json:
-            self.video_json[client_id] = []
+    def add_device(self, device_id: str) -> jsonpatch.JsonPatch:
+        if device_id not in self.video_json['videos']:
+            self.video_json['videos'][device_id] = []
         self.save_json()
-        return self.create_patch({}, self.video_json[client_id])
+        return self.create_patch([], self.video_json['videos'][device_id])
     
-    def remove_client(self, client_id: str) -> jsonpatch.JsonPatch:
-        if client_id not in self.video_json:
-            return {"message": f"Client ID {client_id} not found"}
-        old_client_videos = deepcopy(self.get_client_videos(client_id))
-        del self.video_json[client_id]
+    def remove_device(self, device_id: str) -> jsonpatch.JsonPatch:
+        if device_id not in self.video_json['videos']:
+            return {"message": f"Device ID {device_id} not found"}
+        old_device_videos = deepcopy(self.get_device_videos(device_id))
+        del self.video_json['videos'][device_id]
         self.save_json()
-        return self.create_patch(old_client_videos, {})
+        return self.create_patch(old_device_videos, [])
         
-    def add_video(self, client_id: str, video_name: str, video_path: str, annotations: list[dict[str]] = None) -> jsonpatch.JsonPatch:
-        if client_id not in self.video_json:
-            self.video_json[client_id] = []
-        old_client_videos = deepcopy(self.get_client_videos(client_id))
+    def add_video(self, device_id: str, video_name: str, video_path: str, annotations: list[dict[str]] = None) -> jsonpatch.JsonPatch:
+        if device_id not in self.video_json['videos']:
+            self.video_json['videos'][device_id] = []
+        old_device_videos = deepcopy(self.get_device_videos(device_id))
         video_entry = self.video_template.copy()
-        video_entry["fileName"] = video_name
-        video_entry["filePath"] = video_path
-        self.video_json[client_id].append(video_entry)
+        video_entry["file_name"] = video_name
+        video_entry["file_path"] = video_path
+        self.video_json['videos'][device_id].append(video_entry)
         if annotations is not None:
             for annotation in annotations:
-                self.add_annotation(client_id, video_name, annotation["type"], annotation["message"], annotation["timestamp"])
+                self.add_annotation(device_id, video_name, annotation["type"], annotation["message"], annotation["timestamp"])
         self.save_json()
-        return self.create_patch(old_client_videos, self.video_json[client_id])
+        return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
     
-    def remove_video(self, client_id: str, video_name: str) -> jsonpatch.JsonPatch:
-        if client_id not in self.video_json:
-            return {"message": f"Client ID {client_id} not found"}
-        elif not any(video["fileName"] == video_name for video in self.video_json[client_id]):
-            return {"message": f"Video {video_name} not found for client {client_id}"}
-        old_client_videos = deepcopy(self.get_client_videos(client_id))
-        self.video_json[client_id] = [video for video in self.video_json[client_id] if video["fileName"] != video_name]
+    def remove_video(self, device_id: str, video_name: str) -> jsonpatch.JsonPatch:
+        if device_id not in self.video_json['videos']:
+            return {"message": f"device ID {device_id} not found"}
+        elif not any(video["file_name"] == video_name for video in self.video_json['videos'][device_id]):
+            return {"message": f"Video {video_name} not found for device {device_id}"}
+        old_device_videos = deepcopy(self.get_device_videos(device_id))
+        self.video_json['videos'][device_id] = [video for video in self.video_json['videos'][device_id] if video["file_name"] != video_name]
         self.save_json()
-        return self.create_patch(old_client_videos, self.video_json[client_id])
+        return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
+    
+    def clear_status(self, device_id: str, video_name: str) -> jsonpatch.JsonPatch:
+        if device_id not in self.video_json['videos']:
+            return {"message": f"device ID {device_id} not found"}
+        elif not any(video["file_name"] == video_name for video in self.video_json['videos'][device_id]):
+            return {"message": f"Video {video_name} not found for device {device_id}"}
+        old_device_videos = deepcopy(self.get_device_videos(device_id))
+        video = next(video for video in self.video_json['videos'][device_id] if video["file_name"] == video_name)
+        video["status_list"] = []
+        self.save_json()
+        return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
+    
+    def add_status(self, device_id: str, video_name: str, status: str) -> jsonpatch.JsonPatch:
+        if device_id not in self.video_json['videos']:
+            return {"message": f"device ID {device_id} not found"}
+        elif not any(video["file_name"] == video_name for video in self.video_json['videos'][device_id]):
+            return {"message": f"Video {video_name} not found for device {device_id}"}
+        old_device_videos = deepcopy(self.get_device_videos(device_id))
+        video = next(video for video in self.video_json['videos'][device_id] if video["file_name"] == video_name)
+        video["status_list"].append(status)
+        self.save_json()
+        return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
         
-    def add_annotation(self, client_id: str, video_name: str, status: str, message: str, timestamp: str) -> jsonpatch.JsonPatch:
-        if client_id not in self.video_json:
-            return {"message": f"Client ID {client_id} not found"}
-        elif not any(video["fileName"] == video_name for video in self.video_json[client_id]):
-            return {"message": f"Video {video_name} not found for client {client_id}"}
-        old_client_videos = deepcopy(self.get_client_videos(client_id))
-        video = next(video for video in self.video_json[client_id] if video["fileName"] == video_name)
+    def add_annotation(self, device_id: str, video_name: str, type: str, message: str, timestamp: str) -> jsonpatch.JsonPatch:
+        if device_id not in self.video_json['videos']:
+            return {"message": f"device ID {device_id} not found"}
+        elif not any(video["file_name"] == video_name for video in self.video_json['videos'][device_id]):
+            return {"message": f"Video {video_name} not found for device {device_id}"}
+        old_device_videos = deepcopy(self.get_device_videos(device_id))
+        video = next(video for video in self.video_json['videos'][device_id] if video["file_name"] == video_name)
         annotation = self.annotation_template.copy()
-        annotation["type"] = status
+        annotation["type"] = type
         annotation["message"] = message
         annotation["timestamp"] = timestamp
         video["annotations"].append(annotation)
-        video["status_counts"][status] += 1
+        video["status_counts"][type] += 1
         self.save_json()
-        return self.create_patch(old_client_videos, self.video_json[client_id])
+        return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
         
-    def clear_annotations(self, client_id: str, video_name: str) -> jsonpatch.JsonPatch:
-        if client_id not in self.video_json:
-            return {"message": f"Client ID {client_id} not found"}
-        elif not any(video["fileName"] == video_name for video in self.video_json[client_id]):
-            return {"message": f"Video {video_name} not found for client {client_id}"}
-        old_client_videos = deepcopy(self.get_client_videos(client_id))
-        video = next(video for video in self.video_json[client_id] if video["fileName"] == video_name)
+    def clear_annotations(self, device_id: str, video_name: str) -> jsonpatch.JsonPatch:
+        if device_id not in self.video_json['videos']:
+            return {"message": f"Device ID {device_id} not found"}
+        elif not any(video["file_name"] == video_name for video in self.video_json['videos'][device_id]):
+            return {"message": f"Video {video_name} not found for device {device_id}"}
+        old_device_videos = deepcopy(self.get_device_videos(device_id))
+        video = next(video for video in self.video_json['videos'][device_id] if video["file_name"] == video_name)
         video["annotations"] = []
         video["status_counts"] = {
-            "correct": 0,
+            "info": 0,
             "warning": 0,
             "error": 0
         }
         self.save_json()
-        return self.create_patch(old_client_videos, self.video_json[client_id])
-        
-    def get_video(self, client_id: str, video_name: str) -> dict:
-        if client_id not in self.video_json:
-            return {"message": f"Client ID {client_id} not found"}
-        elif not any(video["fileName"] == video_name for video in self.video_json[client_id]):
-            return {"message": f"Video {video_name} not found for client {client_id}"}
-        return next(video for video in self.video_json[client_id] if video["fileName"] == video_name)
+        return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
     
-    def get_client_videos(self, client_id: str) -> list[dict]:
-        if client_id not in self.video_json:
+    def add_task(self, device_id: str, video_name: str, task_id: str) -> None:
+        if device_id not in self.video_json['active_tasks']:
+            self.video_json['active_tasks'][device_id] = {}
+        self.video_json['active_tasks'][device_id][video_name] = task_id
+        
+    def get_task(self, device_id: str, video_name: str) -> str:
+        if device_id in self.video_json['active_tasks'] and video_name in self.video_json['active_tasks'][device_id]:
+            return self.video_json['active_tasks'][device_id][video_name]
+        return None
+        
+    def remove_task(self, device_id: str, video_name: str) -> None:
+        if device_id in self.video_json['active_tasks'] and video_name in self.video_json['active_tasks'][device_id]:
+            del self.video_json['active_tasks'][device_id][video_name]
+        
+    def get_video(self, device_id: str, video_name: str) -> dict:
+        if device_id not in self.video_json['videos']:
+            return {"message": f"device ID {device_id} not found"}
+        elif not any(video["file_name"] == video_name for video in self.video_json['videos'][device_id]):
+            return {"message": f"Video {video_name} not found for device {device_id}"}
+        return next(video for video in self.video_json['videos'][device_id] if video["file_name"] == video_name)
+    
+    def get_device_videos(self, device_id: str) -> list[dict]:
+        if device_id not in self.video_json['videos']:
             return []
-        return self.video_json[client_id]
+        return self.video_json['videos'][device_id]
     
     def get_all_videos(self) -> dict:
-        return self.video_json
+        return self.video_json['videos']
     
     def create_patch(self, old_json: dict, new_json: dict) -> jsonpatch.JsonPatch:
         return jsonpatch.JsonPatch.from_diff(old_json, new_json)
     
-    def apply_patch(self, client_id: str, patch: jsonpatch.JsonPatch) -> jsonpatch.JsonPatch:
-        if client_id not in self.video_json:
-            return {"message": f"Client ID {client_id} not found"}
-        old_client_videos = self.get_client_videos(client_id)
-        new_client_videos = patch.apply(old_client_videos)
-        self.video_json[client_id] = new_client_videos
+    def apply_patch(self, device_id: str, patch: jsonpatch.JsonPatch) -> jsonpatch.JsonPatch:
+        if device_id not in self.video_json['videos']:
+            return {"message": f"device ID {device_id} not found"}
+        old_device_videos = self.get_device_videos(device_id)
+        new_device_videos = patch.apply(old_device_videos)
+        self.video_json['videos'][device_id] = new_device_videos
         self.save_json()
-        return new_client_videos
+        return new_device_videos
         
     def load_json(self, json_path: str = None) -> dict:
         if json_path is None:
             json_path = self.json_path
-        with open(json_path, 'r') as f:
-            return json.load(f)
+        try:
+            with open(json_path, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
         
     def save_json(self, json_path: str = None) -> None:
         if json_path is None:
@@ -158,9 +199,9 @@ if __name__ == '__main__':
     json_path = 'video_json.json'
     vjm = VideoJSONManager(json_path)
     print(vjm.sync_videos('uploads'))
-    # print(vjm.add_video("client1", "video2.mp4", "/path/to/video2.mp4"))
-    # print(vjm.add_annotation("client1", "video2.mp4", "warning", "This is a warning", "00:00:05"))
-    # print(vjm.clear_annotations("client1", "video2.mp4"))
-    # print(vjm.remove_video("client1", "video2.mp4"))
-    # print(vjm.remove_client("client1"))
+    # print(vjm.add_video("device1", "video2.mp4", "/path/to/video2.mp4"))
+    # print(vjm.add_annotation("device1", "video2.mp4", "warning", "This is a warning", "00:00:05"))
+    # print(vjm.clear_annotations("device1", "video2.mp4"))
+    # print(vjm.remove_video("device1", "video2.mp4"))
+    # print(vjm.remove_device("device1"))
     

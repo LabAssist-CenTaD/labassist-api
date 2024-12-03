@@ -17,6 +17,12 @@ from torchvision.transforms._transforms_video import (
 
 from app.ml_models.action_detection.model import ActionDetectionModel
 
+classes = {
+    0: 'Correct',
+    1: 'Incorrect',
+    2: 'Stationary',
+}
+
 video_transform = Compose([
     UniformTemporalSubsample(16),
     Div255(),
@@ -33,4 +39,4 @@ def predict_action(video, model, transform=video_transform):
     video = transform(video)
     video = video.unsqueeze(0)  
     pred = model(video).detach().cpu().numpy().flatten()
-    return pred
+    return classes[int(np.argmax(pred, axis=0))]

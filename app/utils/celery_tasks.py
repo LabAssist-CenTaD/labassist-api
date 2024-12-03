@@ -25,9 +25,10 @@ def celery_init_app(app: Flask) -> Celery:
     
     return celery_app
 
-@shared_task(ignore_result=False)
+@shared_task(ignore_result=False, trail=True)
 def process_video_clip(clip_path: str, start_frame: int, end_frame: int) -> np.ndarray:
     cap = cv2.VideoCapture(str(clip_path))
+    fps = cap.get(cv2.CAP_PROP_FPS)
     cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
     
     clip = np.array(cap.read()[1])
@@ -49,9 +50,34 @@ def process_video_clip(clip_path: str, start_frame: int, end_frame: int) -> np.n
 
         clip = clip.permute(3, 0, 1, 2)
         pred = predict_action(clip, action_model)
-        return int(np.argmax(pred, axis=0))
+        return {
+            "start_seconds": int(start_frame / fps),
+            "end_seconds": int(end_frame / fps),
+            "swirling": pred
+        }
     else:
         return None
+    
+@shared_task(ignore_result=False, trail=True)
+def process_results(results: list) -> list:
+    annotations = []
+    for result in results:
+        if result is not None:
+            if result["swirling"] == "Correct":
+                type = "info"
+                message = "Correct swirling detected"
+            elif result["swirling"] == "Incorrect":
+                type = "error"
+                message = "Conical flask should not be grinded on the white tile"
+            elif result["swirling"] == "Stationary":
+                type = "error"
+                message = "Conical flask should be swirled to ensure proper mixing"
+            annotations.append({
+                "type": type,
+                "message": message,
+                "timestamp": f"{result['start_seconds'] // 3600:02}:{result['start_seconds'] % 3600 // 60:02}:{result['start_seconds'] % 60:02}"
+            })
+    return annotations
     
     
     

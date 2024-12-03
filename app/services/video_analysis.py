@@ -3,12 +3,12 @@ import cv2
 import math
 import mmap
 from flask import current_app
-from celery import group
+from celery import group, chord
 from celery.result import AsyncResult, GroupResult
-from app.utils.celery_tasks import process_video_clip
+from app.utils.celery_tasks import process_video_clip, process_results
 from app.utils.progress_chord import ProgressChord
 
-def analyze_clip(clip_path, interval=4, cleanup=True) -> GroupResult:
+def analyze_clip(device_id, clip_path, interval=4, cleanup=True) -> GroupResult:
     """Function to start the analysis process of a video clip.
 
     Args:
@@ -23,8 +23,8 @@ def analyze_clip(clip_path, interval=4, cleanup=True) -> GroupResult:
     
         result (GroupResult): The result of the analysis process.
     """
-    mmap_file = current_app.config['UPLOAD_FOLDER'] / f'{clip_path}.mmap'
-    with open(current_app.config['UPLOAD_FOLDER'] / clip_path, 'r+b') as f:
+    mmap_file = current_app.config['UPLOAD_FOLDER'] / device_id / f'{clip_path}.mmap'
+    with open(current_app.config['UPLOAD_FOLDER'] / device_id / clip_path, 'r+b') as f:
         mm = mmap.mmap(f.fileno(), 0)
         with open(mmap_file, 'wb') as mmf:
             mmf.write(mm)
@@ -39,44 +39,40 @@ def analyze_clip(clip_path, interval=4, cleanup=True) -> GroupResult:
         result = process_video_clip.s(str(mmap_file), start_frame, end_frame)
         results.append(result)
         # break #TODO: remove this line to process the entire video
-    task_group = group(results)
+    # task_group = group(results)
     # result = task_group.apply_async()
-    result = ProgressChord(task_group)(process_results)
+    result = chord(results)(process_results.s())
     
     if cleanup:
         # cleanup uploads folder
         os.remove(mmap_file)
-        os.remove(current_app.config['UPLOAD_FOLDER'] / clip_path)
+        os.remove(current_app.config['UPLOAD_FOLDER'] / device_id / clip_path)
     
     return result
     
-def get_task_status(result: GroupResult) -> dict:
+def get_task_status(result_id: str) -> tuple[str, dict]:
     """Function to get the status of a list of task IDs.
 
     Args:
     
-        task_ids (list): A list of task IDs belonging to the same task.
-    
+        result_id (str): The ID of the task result.
+        
     Returns:
     
-        task_status (dict): A dictionary containing the status of the tasks.
+        tuple[str, dict]: A tuple containing the status of the task and the result of the task.
     """
-    print(result)
-    # if result.ready():
-    #     return {
-    #         'ready': result.ready(),
-    #         'successful': result.successful(),
-    #     }
-    # else:
-    #     completed = result.completed_count()
-    #     total = len(result.results)
-    #     return {
-    #         'ready': result.ready(),
-    #         'successful': False,
-    #         'progress': math.ceil((completed / total) * 100),
-    #     }
-    return {}
-def process_results(results):
-    print('Processing results')
-    print(results)
+    result = AsyncResult(result_id)
+    if result.state == 'SUCCESS':
+        return 'SUCCESS', [item for item in result.get()]
+    elif result.state == 'FAILURE':
+        return 'FAILURE', {'message': 'An error occurred while processing the video clip'}
+    elif result.state == 'STARTED':
+        return 'STARTED', {'message': 'The video clip is still being processed'}
+    elif result.state == 'PENDING':
+        return 'PENDING', {'message': 'The video clip is in the queue'}
+    elif result.state == 'RETRY':
+        return 'RETRY', {'message': 'The video clip is being retried'}
+    else:
+        print('unknown state:', result.state)
+        return 'UNKNOWN', {'message': 'The video clip status is unknown'}  
 
