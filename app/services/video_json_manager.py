@@ -1,3 +1,4 @@
+import os
 import json
 import jsonpatch
 from copy import deepcopy
@@ -24,6 +25,15 @@ class VideoJSONManager:
         }
         if video_json is None:
             self.video_json = self.load_json()
+            
+    def sync_videos(self, video_dir: str) -> jsonpatch.JsonPatch:
+        old_json = deepcopy(self.video_json)
+        for client_id in self.video_json:
+            for video in self.video_json[client_id]:
+                if not os.path.exists(os.path.join(video_dir, video["fileName"])):
+                    self.video_json[client_id].remove(video)
+        self.save_json()
+        return self.create_patch(old_json, self.video_json)
         
     def add_client(self, client_id: str) -> jsonpatch.JsonPatch:
         if client_id not in self.video_json:
@@ -147,7 +157,7 @@ class VideoJSONManager:
 if __name__ == '__main__':
     json_path = 'video_json.json'
     vjm = VideoJSONManager(json_path)
-    print(vjm)
+    print(vjm.sync_videos('uploads'))
     # print(vjm.add_video("client1", "video2.mp4", "/path/to/video2.mp4"))
     # print(vjm.add_annotation("client1", "video2.mp4", "warning", "This is a warning", "00:00:05"))
     # print(vjm.clear_annotations("client1", "video2.mp4"))

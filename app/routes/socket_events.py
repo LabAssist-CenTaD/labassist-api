@@ -12,7 +12,7 @@ def init_socketio(socketio_instance: SocketIO):
     @socketio.on('connect')
     def handle_connect():
         print('Client connected')
-        emit('message', {'data': 'Connected to server!'})
+        emit('message', {'message': 'Connected to server!'})
         #socketio.start_background_task(background_task)
         
     @socketio.on('disconnect')
@@ -26,14 +26,14 @@ def init_socketio(socketio_instance: SocketIO):
             client_id = data['client_id']
             join_room(client_id)
             vjm = current_app.extensions['vjm']
-            return "OK", {'data': 'Authenticated!', 'cached_videos': vjm.get_client_videos(client_id)}
+            return "OK", {'message': 'Authenticated!', 'cached_videos': vjm.get_client_videos(client_id)}
         else:
-            return "ERROR", {'data': 'Client ID not provided', 'cached_videos': []}
+            return "ERROR", {'message': 'Client ID not provided', 'cached_videos': []}
         
     @socketio.on('button_click')
     def handle_button_click(data):
         print(f'Button clicked: {data}')
-        emit('message', {'data': 'Button clicked!'})
+        emit('message', {'message': 'Button clicked!'})
         
     @socketio.on('patch_backend')
     def handle_apply_patch(data):
@@ -46,5 +46,5 @@ def init_socketio(socketio_instance: SocketIO):
 
     def background_task():
         while True:
-            socketio.emit('update', {'data': 'Periodic update'})
+            socketio.emit('update', {'message': 'Periodic update'})
             socketio.sleep(1)
