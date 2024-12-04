@@ -1,6 +1,7 @@
 from flask_socketio import emit, join_room, leave_room, SocketIO
 from flask import current_app
 from werkzeug.utils import secure_filename
+from copy import deepcopy
 import os
 
 from app.services.video_analysis import get_task_status
@@ -56,7 +57,7 @@ def init_socketio(socketio_instance: SocketIO):
         }
         while True:
             for device_id in vjm.video_json['active_tasks']:
-                old_device_videos = vjm.get_device_videos(device_id)
+                old_device_videos = deepcopy(vjm.get_device_videos(device_id))
                 for video_name, task_id in vjm.video_json['active_tasks'][device_id].copy().items():
                     status, result = get_task_status(task_id)
                     vjm.clear_status(device_id, video_name)
