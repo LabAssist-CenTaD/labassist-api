@@ -51,7 +51,7 @@ class VideoJSONManager:
         self.save_json()
         return self.create_patch(old_device_videos, [])
         
-    def add_video(self, device_id: str, video_name: str, video_path: str, annotations: list[dict[str]] = None) -> jsonpatch.JsonPatch:
+    def add_video(self, device_id: str, video_name: str, video_path: str, status: list[str] = ["uploaded"], annotations: list[dict[str]] = None) -> jsonpatch.JsonPatch:
         if device_id not in self.video_json['videos']:
             self.video_json['videos'][device_id] = []
         old_device_videos = deepcopy(self.get_device_videos(device_id))
@@ -59,6 +59,9 @@ class VideoJSONManager:
         video_entry["file_name"] = video_name
         video_entry["file_path"] = video_path
         self.video_json['videos'][device_id].append(video_entry)
+        if status is not None:
+            for s in status:
+                self.add_status(device_id, video_name, s)
         if annotations is not None:
             for annotation in annotations:
                 self.add_annotation(device_id, video_name, annotation["type"], annotation["message"], annotation["timestamp"])
