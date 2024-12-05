@@ -8,6 +8,8 @@ class Config:
     
     CELERY_RESULT_BACKEND = 'db+sqlite:///results.db'
     CELERY_BROKER_URL = 'amqp://guest@localhost//'
+    CELERY_TASK_TRACK_STARTED = True
+    CELERY_TRACK_STARTED = True
     
     SOCKETIO_MESSAGE_QUEUE = 'db+sqlite:///socketio.db'
     

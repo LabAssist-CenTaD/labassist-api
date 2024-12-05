@@ -17,7 +17,8 @@ def create_app() -> tuple[SocketIO, Flask]:
         CELERY=dict(
             broker_url=app.config['CELERY_BROKER_URL'],
             result_backend=app.config['CELERY_RESULT_BACKEND'],
-            task_ignore_result=True,
+            task_track_started = True,
+            # task_ignore_result=True,
             broker_connection_retry_on_startup=True,
         ),
     )

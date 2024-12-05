@@ -8,7 +8,7 @@ from app.services.video_analysis import get_task_status
 
 socketio = None
 
-def init_socketio(socketio_instance: SocketIO):
+def init_socketio(socketio_instance: SocketIO) -> None:
     global socketio
     socketio = socketio_instance
 
@@ -71,7 +71,7 @@ def init_socketio(socketio_instance: SocketIO):
                             vjm.add_annotation(device_id, video_name, annotation['type'], annotation['message'], annotation['timestamp'])
                 new_device_videos = vjm.get_device_videos(device_id)
                 if old_device_videos != new_device_videos:
-                    patch = vjm.generate_patch(old_device_videos, new_device_videos)
+                    patch = vjm.create_patch(old_device_videos, new_device_videos)
                     print(f'Patching frontend: {patch}')
                     socketio.emit('patch_frontend', patch.to_string(), room=device_id)
             socketio.sleep(1)
