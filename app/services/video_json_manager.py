@@ -55,7 +55,7 @@ class VideoJSONManager:
         if device_id not in self.video_json['videos']:
             self.video_json['videos'][device_id] = []
         old_device_videos = deepcopy(self.get_device_videos(device_id))
-        video_entry = self.video_template.copy()
+        video_entry = deepcopy(self.video_template)
         video_entry["file_name"] = video_name
         video_entry["file_path"] = video_path
         self.video_json['videos'][device_id].append(video_entry)
@@ -107,7 +107,7 @@ class VideoJSONManager:
             return {"message": f"Video {video_name} not found for device {device_id}"}
         old_device_videos = deepcopy(self.get_device_videos(device_id))
         video = next(video for video in self.video_json['videos'][device_id] if video["file_name"] == video_name)
-        annotation = self.annotation_template.copy()
+        annotation = deepcopy(self.annotation_template)
         annotation["type"] = type
         annotation["message"] = message
         annotation["timestamp"] = timestamp
