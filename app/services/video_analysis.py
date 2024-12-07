@@ -1,26 +1,18 @@
 import os
 import cv2
-import math
 import mmap
 from flask import current_app
-from celery import group, chord
+from celery import chord
 from celery.result import AsyncResult, GroupResult
 from app.utils.celery_tasks import process_video_clip, process_results
-from app.utils.progress_chord import ProgressChord
 
 def analyze_clip(device_id, clip_path, interval=4, cleanup=True) -> GroupResult:
     """Function to start the analysis process of a video clip.
-
     Args:
-    
         clip_path (str): The path to the video clip.
-    
         interval (int): The interval in seconds at which to analyze the video clip.
-        
         cleanup (bool): A flag to indicate whether to cleanup the uploaded files after analysis.
-    
     Returns:
-    
         result (GroupResult): The result of the analysis process.
     """
     mmap_file = current_app.config['UPLOAD_FOLDER'] / device_id / f'{clip_path}.mmap'
@@ -52,13 +44,9 @@ def analyze_clip(device_id, clip_path, interval=4, cleanup=True) -> GroupResult:
     
 def get_task_status(result_id: str) -> tuple[str, dict]:
     """Function to get the status of a list of task IDs.
-
     Args:
-    
         result_id (str): The ID of the task result.
-        
     Returns:
-    
         tuple[str, dict]: A tuple containing the status of the task and the result of the task.
     """
     result = AsyncResult(result_id)

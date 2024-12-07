@@ -1,14 +1,10 @@
-import subprocess
 from flask_cors import CORS
-from flask import Flask, session
+from flask import Flask
 from flask_socketio import SocketIO
-from flask_sqlalchemy import SQLAlchemy
 
 from app.routes.video_routes import video_routes
 from app.utils.celery_tasks import celery_init_app
 from app.services.video_json_manager import VideoJSONManager
-
-db = SQLAlchemy()
 
 def create_app() -> tuple[SocketIO, Flask]:
     app = Flask(__name__)
@@ -22,10 +18,6 @@ def create_app() -> tuple[SocketIO, Flask]:
             broker_connection_retry_on_startup=True,
         ),
     )
-    
-    db.init_app(app)
-    with app.app_context():
-        db.create_all()
         
     vjm = VideoJSONManager(json_path=app.config['VIDEO_JSON_PATH'])
     vjm.load_json()

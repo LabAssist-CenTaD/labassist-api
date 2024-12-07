@@ -1,9 +1,7 @@
 import os
+import jsonpatch
 from flask import Blueprint, jsonify, request, current_app
 from werkzeug.utils import secure_filename
-from celery.result import GroupResult
-from flask_socketio import emit
-import jsonpatch
 
 from app.services.video_analysis import analyze_clip, get_task_status
 
@@ -11,6 +9,13 @@ video_routes = Blueprint('video_routes', __name__)
 
 @video_routes.route('/upload', methods=['POST'])
 def upload_video():
+    """Route to upload a video file to the server.
+    Args:
+        file (FileStorage): The video file to upload.
+        device_id (str): The ID of the device that uploaded the video.
+    Returns:
+        response (json): A JSON response containing the message and filename of the uploaded video
+    """
     device_id = request.form.get('device_id')
     file = request.files['video']
     vjm = current_app.extensions['vjm']
@@ -38,6 +43,13 @@ def upload_video():
 
 @video_routes.route('/process_video/<clip_name>', methods=['GET'])
 def process_video(clip_name):
+    """Route to process a video clip.
+    Args:
+        clip_name (str): The name of the video clip to process.
+        device_id (str): The ID of the device that uploaded the video.
+    Returns:
+        response (json): A JSON response containing the task ID of the video processing task
+    """
     device_id = request.args.get('device_id')
     vjm = current_app.extensions['vjm']
     if not device_id:
@@ -58,8 +70,16 @@ def process_video(clip_name):
     vjm.add_task(device_id, clip_name, task_result.id)
     return jsonify({'task_id': task_result.id}), 202
 
+# This function is currently not in use as polling is done through the socket connection instead
 @video_routes.route('/get_task_status/<clip_name>', methods=['GET'])
 def get_task_status_route(clip_name):
+    """Route to get the status of a video processing task.
+    Args:
+        clip_name (str): The name of the video clip to process.
+        device_id (str): The ID of the device that uploaded the video.
+    Returns:
+        response (json): A JSON response containing the status of the video processing task
+    """
     device_id = request.args.get('device_id')
     vjm = current_app.extensions['vjm']
     if not device_id:

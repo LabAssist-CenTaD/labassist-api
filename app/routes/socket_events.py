@@ -1,8 +1,6 @@
-from flask_socketio import emit, join_room, leave_room, SocketIO
-from flask import current_app
-from werkzeug.utils import secure_filename
 from copy import deepcopy
-import os
+from flask import current_app
+from flask_socketio import emit, join_room, SocketIO
 
 from app.services.video_analysis import get_task_status
 
@@ -24,7 +22,12 @@ def init_socketio(socketio_instance: SocketIO) -> None:
         
     @socketio.on('authenticate')
     def handle_authenticate(data):
-        #print(f'Authenticating: {data}')
+        """Socket event to authenticate a device using a device ID.
+        Args:
+            data (dict): A dictionary containing the device ID.
+        Returns:
+            response (str): A string response containing the status of the authentication.
+        """
         if 'device_id' in data:
             device_id = data['device_id']
             join_room(device_id)
@@ -34,21 +37,23 @@ def init_socketio(socketio_instance: SocketIO) -> None:
         else:
             return "ERROR", {'message': 'Device ID not provided', 'cached_videos': []}
         
-    @socketio.on('button_click')
-    def handle_button_click(data):
-        print(f'Button clicked: {data}')
-        emit('message', {'message': 'Button clicked!'})
-        
     @socketio.on('patch_backend')
     def handle_apply_patch(data):
-        print(f'Applying patch: {data}')
+        """Socket event to apply a patch to the backend.
+        Args:
+            data (dict): A dictionary containing the device ID and the patch to apply.
+        """
         device_id = data['device_id']
         patch = data['patch']
         vjm = current_app.extensions['vjm']
         result = vjm.apply_patch(device_id, patch)
         emit('update', {'data': result}, room=device_id)
 
-    def progress_updater(vjm):
+    def progress_updater(vjm, interval=1):
+        """Function to update the progress of video analysis tasks in the background.
+        Args:
+            vjm (VideoJSONManager): An instance of the VideoJSONManager class.
+        """
         status_map = {
             'PENDING': 'queued',
             'STARTED': 'predicting',
@@ -74,4 +79,4 @@ def init_socketio(socketio_instance: SocketIO) -> None:
                     patch = vjm.create_patch(old_device_videos, new_device_videos)
                     print(f'Patching frontend: {patch}')
                     socketio.emit('patch_frontend', patch.to_string(), room=device_id)
-            socketio.sleep(1)
+            socketio.sleep(interval)
