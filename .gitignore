@@ -1,6 +1,7 @@
 uploads
 lightning_logs
 checkpoints
+video_json.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
