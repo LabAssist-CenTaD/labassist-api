@@ -38,7 +38,6 @@ def analyze_clip(device_id, clip_path, interval=4, cleanup=True) -> GroupResult:
     if cleanup:
         # cleanup uploads folder
         os.remove(mmap_file)
-        os.remove(current_app.config['UPLOAD_FOLDER'] / device_id / clip_path)
     
     return result
     

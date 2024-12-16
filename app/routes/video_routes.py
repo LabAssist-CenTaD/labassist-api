@@ -101,7 +101,7 @@ def get_video(clip_name):
             headers={'Content-Disposition': f'attachment; filename={clip_name}'}
         )
         
-@video_routes.route('/delete/<clip_name>', methods=['DELETE'])
+@video_routes.route('/delete/<clip_name>', methods=['GET'])
 def delete_video(clip_name):
     """Route to delete a video clip.
     Args:
