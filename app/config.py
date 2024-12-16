@@ -4,7 +4,7 @@ class Config:
     DEBUG_MODE = True
     
     UPLOAD_FOLDER = Path('uploads')
-    CLEANUP_UPLOADS = True
+    CLEANUP_UPLOADS = False
     
     CELERY_RESULT_BACKEND = 'db+sqlite:///results.db'
     CELERY_BROKER_URL = 'amqp://guest@localhost//'
