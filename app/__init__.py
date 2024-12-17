@@ -35,7 +35,7 @@ def create_app() -> tuple[SocketIO, Flask]:
         result_serializer='pickle',
         accept_content=['pickle']
     )
-    app.extensions['celery'] = celery_app
+    app.extensions['celery','json','application/text'] = celery_app
     
     socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')
     from app.routes import socket_events

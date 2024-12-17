@@ -3,6 +3,8 @@ import json
 import jsonpatch
 from copy import deepcopy
 
+from app.schemas.annotation import Annotation
+
 class VideoJSONManager:
     def __init__(self, json_path: str, video_json: dict = None):
         self.video_json = video_json
@@ -64,7 +66,7 @@ class VideoJSONManager:
                 self.add_status(device_id, video_name, s)
         if annotations is not None:
             for annotation in annotations:
-                self.add_annotation(device_id, video_name, annotation["type"], annotation["message"], annotation["timestamp"])
+                self.add_annotation(device_id, video_name, annotation)
         self.save_json()
         return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
     
@@ -100,19 +102,16 @@ class VideoJSONManager:
         self.save_json()
         return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
         
-    def add_annotation(self, device_id: str, video_name: str, type: str, message: str, timestamp: str) -> jsonpatch.JsonPatch:
+    def add_annotation(self, device_id: str, video_name: str, annotation: Annotation) -> jsonpatch.JsonPatch:
         if device_id not in self.video_json['videos']:
             return {"message": f"device ID {device_id} not found"}
         elif not any(video["file_name"] == video_name for video in self.video_json['videos'][device_id]):
             return {"message": f"Video {video_name} not found for device {device_id}"}
         old_device_videos = deepcopy(self.get_device_videos(device_id))
         video = next(video for video in self.video_json['videos'][device_id] if video["file_name"] == video_name)
-        annotation = deepcopy(self.annotation_template)
-        annotation["type"] = type
-        annotation["message"] = message
-        annotation["timestamp"] = timestamp
+        annotation = annotation.to_dict()
         video["annotations"].append(annotation)
-        video["status_counts"][type] += 1
+        video["status_counts"][annotation['type']] += 1
         self.save_json()
         return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
         

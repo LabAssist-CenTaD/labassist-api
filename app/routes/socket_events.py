@@ -73,7 +73,7 @@ def init_socketio(socketio_instance: SocketIO) -> None:
                         vjm.clear_annotations(device_id, video_name)
                     elif status == 'SUCCESS':   
                         for annotation in result:
-                            vjm.add_annotation(device_id, video_name, annotation['type'], annotation['message'], annotation['timestamp'])
+                            vjm.add_annotation(device_id, video_name, annotation)
                 new_device_videos = vjm.get_device_videos(device_id)
                 if old_device_videos != new_device_videos:
                     patch = vjm.create_patch(old_device_videos, new_device_videos)

@@ -39,24 +39,26 @@ def analyze_clip(device_id, clip_path, interval=4, cleanup=True) -> GroupResult:
     return result
     
 def get_task_status(result_id: str) -> tuple[str, dict]:
-    """Function to get the status of a list of task IDs.
+    """Function to get the status of a task ID.
     Args:
         result_id (str): The ID of the task result.
     Returns:
         tuple[str, dict]: A tuple containing the status of the task and the result of the task.
     """
     result = AsyncResult(result_id)
-    if result.state == 'SUCCESS':
+    state = str(result.state)
+    if state == 'SUCCESS':
         return 'SUCCESS', [item for item in result.get()]
-    elif result.state == 'FAILURE':
+    elif state == 'FAILURE':
         return 'FAILURE', {'message': 'An error occurred while processing the video clip'}
-    elif result.state == 'STARTED':
+    elif state == 'STARTED':
         return 'STARTED', {'message': 'The video clip is still being processed'}
-    elif result.state == 'PENDING':
+    elif state == 'PENDING':
         return 'PENDING', {'message': 'The video clip is in the queue'}
-    elif result.state == 'RETRY':
+    elif state == 'RETRY':
         return 'RETRY', {'message': 'The video clip is being retried'}
     else:
-        print('unknown state:', result.state)
-        return 'UNKNOWN', {'message': 'The video clip status is unknown'}  
+        print(f'unknown state: {result.state} of type {type(result.state)}')
+        return result.state, {'message': 'The video clip status is unknown'}  
+        # return 'SUCCESS', [item for item in result.get()] # idk why tf sometimes this would be reached even with a SUCCESS state that is printed
 
