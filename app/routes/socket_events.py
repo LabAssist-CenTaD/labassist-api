@@ -2,7 +2,7 @@ from copy import deepcopy
 from flask import current_app
 from flask_socketio import emit, join_room, SocketIO
 
-from app.services.video_analysis import get_task_status
+from app.services.video_task_manager import get_task_status
 
 socketio = None
 

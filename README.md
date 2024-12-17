@@ -11,4 +11,4 @@ https://www.rabbitmq.com/docs/install-windows
 https://www.apachefriends.org/download.html (for sql)
 
 Command to launch celery:
-`celery -A run.celery_app worker --loglevel=info --pool=gevent --concurrency=8`
+`celery -A run.celery_app worker --loglevel=info --pool=gevent`

@@ -3,7 +3,7 @@ import jsonpatch
 from flask import Blueprint, jsonify, request, current_app, Response
 from werkzeug.utils import secure_filename
 
-from app.services.video_analysis import analyze_clip, get_task_status
+from app.services.video_task_manager import analyze_clip, get_task_status
 
 video_routes = Blueprint('video_routes', __name__)
 

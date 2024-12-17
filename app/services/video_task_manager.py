@@ -30,9 +30,6 @@ def analyze_clip(device_id, clip_path, interval=4, cleanup=True) -> GroupResult:
         end_frame = min(i + int(interval * fps), frame_count)
         result = process_video_clip.s(str(mmap_file), start_frame, end_frame)
         results.append(result)
-        # break #TODO: remove this line to process the entire video
-    # task_group = group(results)
-    # result = task_group.apply_async()
     result = chord(results)(process_results.s())
     
     if cleanup:
