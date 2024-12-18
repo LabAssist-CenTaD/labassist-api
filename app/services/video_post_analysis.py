@@ -35,13 +35,13 @@ def process_goggles(results: list) -> list[Annotation]:
             elif group_flag:
                 group_flag = False
                 if result["start_seconds"] - group_start > 10:
-                    annotations.append(Annotation(type=ann_type, message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
+                    annotations.append(Annotation(type=ann_type, category="lab goggles", message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
         elif group_flag:
             group_flag = False
             if result["start_seconds"] - group_start > 10:
-                annotations.append(Annotation(type=ann_type, message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
+                annotations.append(Annotation(type=ann_type, category="lab goggles", message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
     if group_start - result["start_seconds"] > 10:
-            annotations.append(Annotation(type=ann_type, message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
+        annotations.append(Annotation(type=ann_type, category="lab goggles", message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
             
     return annotations
 
@@ -54,7 +54,7 @@ def process_swirling(results: list) -> list[Annotation]:
         # print(f"{result["action_pred"]} {group_type} {group_start}")
         if result["action_pred"] != group_type:
             if group_start and result["start_seconds"] - group_start> 6:
-                annotations.append(Annotation(type=ann_type, message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
+                annotations.append(Annotation(type=ann_type, category='conical flask', message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
             group_start = None
         if result["action_pred"]:
             if result["action_pred"] == "Correct":
@@ -72,7 +72,7 @@ def process_swirling(results: list) -> list[Annotation]:
             message = None
         group_type = result["action_pred"]
     if result["action_pred"] != group_type and group_start and result["start_seconds"] - group_start> 6:
-        annotations.append(Annotation(type=ann_type, message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
+        annotations.append(Annotation(type=ann_type, category='conical flask', message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
     return annotations
 
 def process_tile(results: list) -> list[Annotation]:
@@ -84,10 +84,10 @@ def process_tile(results: list) -> list[Annotation]:
             group_flag = True
             group_start = result["start_seconds"]
         elif group_flag and result["start_seconds"] - group_start > 6:
-            annotations.append(Annotation(type="error", message="Conical flask should be placed on the white tile during titration", start_seconds=group_start, end_seconds=result["start_seconds"]))
+            annotations.append(Annotation(type="error", category="white tile", message="Conical flask should be placed on the white tile during titration", start_seconds=group_start, end_seconds=result["start_seconds"]))
             group_flag = False
     if group_flag and result["start_seconds"] - group_start > 6:
-        annotations.append(Annotation(type="error", message="Conical flask should be placed on the white tile during titration", start_seconds=group_start, end_seconds=result["start_seconds"]))
+        annotations.append(Annotation(type="error", category="white tile", message="Conical flask should be placed on the white tile during titration", start_seconds=group_start, end_seconds=result["start_seconds"]))
     return annotations
 
 def process_funnel(results: list) -> list[Annotation]:
@@ -99,10 +99,10 @@ def process_funnel(results: list) -> list[Annotation]:
             group_flag = True
             group_start = result["start_seconds"]
         elif group_flag and result["start_seconds"] - group_start > 6:
-            annotations.append(Annotation(type="error", message="Filter funnel should not be left on the burette during titration", start_seconds=group_start, end_seconds=result["start_seconds"]))
+            annotations.append(Annotation(type="error", category="funnel", message="Filter funnel should not be left on the burette during titration", start_seconds=group_start, end_seconds=result["start_seconds"]))
             group_flag = False
     if group_flag and result["start_seconds"] - group_start > 6:
-        annotations.append(Annotation(type="error", message="Filter funnel should not be left on the burette during titration", start_seconds=group_start, end_seconds=result["start_seconds"]))
+        annotations.append(Annotation(type="error", category="funnel", message="Filter funnel should not be left on the burette during titration", start_seconds=group_start, end_seconds=result["start_seconds"]))
     return annotations
 
 def process_beaker(results: list) -> list[Annotation]:
@@ -114,8 +114,8 @@ def process_beaker(results: list) -> list[Annotation]:
             group_flag = True
             group_start = result["start_seconds"]
         elif group_flag and result["start_seconds"] - group_start > 2:
-            annotations.append(Annotation(type="error", message="Filter funnel should be used when pouring solution into burette", start_seconds=group_start, end_seconds=result["start_seconds"]))
+            annotations.append(Annotation(type="error", category="funnel", message="Filter funnel should be used when pouring solution into burette", start_seconds=group_start, end_seconds=result["start_seconds"]))
             group_flag = False
     if group_flag and result["start_seconds"] - group_start > 2:
-        annotations.append(Annotation(type="error", message="Filter funnel should be used when pouring solution into burette", start_seconds=group_start, end_seconds=result["start_seconds"]))
+        annotations.append(Annotation(type="error", category="funnel", message="Filter funnel should be used when pouring solution into burette", start_seconds=group_start, end_seconds=result["start_seconds"]))
     return annotations
