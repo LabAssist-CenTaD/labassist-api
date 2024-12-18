@@ -117,6 +117,44 @@ def get_valid_tile(prediction: Results | str) -> dict:
         return None
     else:
         return get_biggest_boxes(valid_tiles)
+    
+def get_valid_funnel(prediction: Results | str) -> dict:
+    prediction = json.loads(prediction.to_json() if isinstance(prediction, Results) else prediction)
+    funnel_boxes = get_objects(prediction, 'Funnel')
+    burette_boxes = get_objects(prediction, 'Burette')
+    
+    # iterate over all permutations of funnel and burette boxes, valid funnels are ones on top of a burette
+    valid_funnels = []
+    for funnel_box in funnel_boxes:
+        for burette_box in burette_boxes:
+            midpoint_of_burette = (burette_box['x1'] + burette_box['x2']) / 2
+            if (funnel_box['x1'] < midpoint_of_burette < funnel_box['x2']) and (funnel_box['y1'] > (burette_box['y1'] * 0.8)):
+                valid_funnels.append(funnel_box)
+    if len(valid_funnels) == 0:
+        return None
+    else:
+        return get_biggest_boxes(valid_funnels)
+    
+def get_valid_beaker(prediction: Results | str) -> dict:
+    prediction = json.loads(prediction.to_json() if isinstance(prediction, Results) else prediction)
+    beaker_boxes = get_objects(prediction, 'Beaker')
+    burette_boxes = get_objects(prediction, 'Burette')
+    
+    # iterate over all permutations of beaker and burette boxes, valid beakers are ones that are within a certain x or y threshold to the top of the burette
+    valid_beakers = []
+    for burette_box in burette_boxes:
+        for beaker_box in beaker_boxes:
+            burette_x = (burette_box['x1'] + burette_box['x2']) / 2
+            burette_y = burette_box['y1']
+            threshold = 2.5 * abs(beaker_box['x2'] - beaker_box['x1']) # threshold is 2.5 times the width of the beaker
+            mid_x_of_beaker = (beaker_box['x1'] + beaker_box['x2']) / 2
+            mid_y_of_beaker = (beaker_box['y1'] + beaker_box['y2']) / 2
+            if abs(mid_x_of_beaker - burette_x) < threshold and abs(mid_y_of_beaker - burette_y) < threshold:
+                valid_beakers.append(beaker_box)
+    if len(valid_beakers) == 0:
+        return None
+    else:
+        return get_biggest_boxes(valid_beakers)
 
 def overlay_boxes(frame, boxes, color=(0, 255, 0)):
     for box in boxes:
