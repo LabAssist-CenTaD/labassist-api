@@ -1,5 +1,6 @@
 import os
 import jsonpatch
+from copy import deepcopy
 from flask import Blueprint, jsonify, request, current_app, Response
 from werkzeug.utils import secure_filename
 
@@ -68,7 +69,23 @@ def process_video(clip_name):
     print(f'Processing video {clip_name} for device {device_id}')
     task_result = analyze_clip(device_id, clip_name, cleanup=current_app.config['CLEANUP_UPLOADS'])
     vjm.add_task(device_id, clip_name, task_result.id)
-    return jsonify({'task_id': task_result.id}), 202
+    old_device_videos = deepcopy(vjm.get_device_videos(device_id))
+    vjm.clear_status(device_id, clip_name)
+    vjm.add_status(device_id, clip_name, 'queued')
+    new_device_videos = vjm.get_device_videos(device_id)
+    patch = vjm.create_patch(old_device_videos, new_device_videos)
+    print(f'processing patch: {patch}')
+    if isinstance(patch, jsonpatch.JsonPatch):
+        current_app.extensions['socketio'].emit('patch_frontend', patch.to_string(), room=device_id)
+        return jsonify({
+            'task_id': task_result.id,
+            'message': 'Video processing started',
+            'filename': clip_name
+        }), 202
+    else:
+        current_app.extensions['socketio'].emit('message', {'data': patch['message']}, room=device_id)
+        return jsonify(patch), 400
+    
 
 @video_routes.route('/video/<clip_name>', methods=['GET'])
 def get_video(clip_name):

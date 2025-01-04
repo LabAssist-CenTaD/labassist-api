@@ -55,7 +55,7 @@ def init_socketio(socketio_instance: SocketIO) -> None:
             vjm (VideoJSONManager): An instance of the VideoJSONManager class.
         """
         status_map = {
-            'PENDING': 'queued',
+            'PENDING': 'predicting', # should be 'queued' instead of 'predicting', but the 'predicting' state is non functional in celery 
             'STARTED': 'predicting',
             'SUCCESS': 'complete',
             'FAILURE': 'warnings-present'

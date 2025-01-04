@@ -30,7 +30,6 @@ def celery_init_app(app: Flask) -> Celery:
 @shared_task(ignore_result=False, trail=True)
 def process_video_clip(clip_path: str, start_frame: int, end_frame: int) -> dict:
     # check if the clip exists
-    print(os.path.exists(clip_path))
     cap = cv2.VideoCapture(str(clip_path))
     fps = cap.get(cv2.CAP_PROP_FPS)
     cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
