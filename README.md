@@ -6,6 +6,13 @@ Usage guide:
 2. Run `docker compose pull`
 3. Run `docker compose up`
 
+If you get an error like: `open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.`
+1. Open a new terminal
+2. Run `cd "C:\Program Files\Docker\Docker"`
+3. Run `./DockerCli.exe -SwitchLinuxEngine`
+
+
+
 NOTE: The instructions below are only for running without docker
 
 Guide on setting up pipenv:
