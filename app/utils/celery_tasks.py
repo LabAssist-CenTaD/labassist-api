@@ -1,4 +1,5 @@
 import torch
+import os
 import cv2
 import numpy as np
 from ultralytics import YOLO
@@ -27,11 +28,19 @@ def celery_init_app(app: Flask) -> Celery:
     return celery_app
 
 @shared_task(ignore_result=False, trail=True)
-def process_video_clip(clip_path: str, start_frame: int, end_frame: int) -> np.ndarray:
+def process_video_clip(clip_path: str, start_frame: int, end_frame: int) -> dict:
+    # check if the clip exists
+    print(os.path.exists(clip_path))
     cap = cv2.VideoCapture(str(clip_path))
     fps = cap.get(cv2.CAP_PROP_FPS)
     cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
-    
+    if not cap.isOpened():
+        return {
+            "start_seconds": int(start_frame / 30),
+            "end_seconds": int(end_frame / 30),
+            "object_pred": None,
+            "action_pred": None,
+        }
     clip = np.array(cap.read()[1])
     obj_pred = object_model.predict(clip, verbose=False)[0]
     flask_box = get_valid_flask(obj_pred)

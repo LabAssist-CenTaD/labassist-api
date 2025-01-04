@@ -2,20 +2,22 @@ import json
 from app.schemas.annotation import Annotation
 from app.utils.object_detection_utils import get_objects, get_biggest_boxes, calculate_iou, get_valid_tile, get_valid_funnel, get_valid_beaker
 
-def compile_annotations(results: list) -> list[Annotation]:
+def compile_annotations(results: list) -> list[dict]:
     annotations = []
     annotations.extend(process_swirling(results))
     annotations.extend(process_goggles(results))
     annotations.extend(process_beaker(results))
     annotations.extend(process_funnel(results))
     annotations.extend(process_tile(results))
-    return annotations        
+    return [a.to_dict() for a in annotations]        
 
 def process_goggles(results: list) -> list[Annotation]:
     annotations = []
     group_flag = False
     group_start = 0 
     for result in results:
+        if not result["object_pred"]:
+            continue
         object_pred = json.loads(result["object_pred"])
         faces = get_objects(object_pred, "Face")
         goggles = get_objects(object_pred, "Lab-goggles")
@@ -51,7 +53,8 @@ def process_swirling(results: list) -> list[Annotation]:
     group_type = None
     group_start = None
     for result in results:
-        # print(f"{result["action_pred"]} {group_type} {group_start}")
+        if not result["object_pred"]:
+            continue
         if result["action_pred"] != group_type:
             if group_start and result["start_seconds"] - group_start> 6:
                 annotations.append(Annotation(type=ann_type, category='conical flask', message=message, start_seconds=group_start, end_seconds=result["start_seconds"]))
@@ -80,6 +83,8 @@ def process_tile(results: list) -> list[Annotation]:
     group_flag = False
     group_start = 0 
     for result in results:
+        if not result["object_pred"]:
+            continue
         if result["action_pred"] in ["Correct", "Incorrect"] and not get_valid_tile(result["object_pred"]):
             group_flag = True
             group_start = result["start_seconds"]
@@ -95,6 +100,8 @@ def process_funnel(results: list) -> list[Annotation]:
     group_flag = False
     group_start = 0 
     for result in results:
+        if not result["object_pred"]:
+            continue
         if result["action_pred"] in ["Correct", "Incorrect"] and get_valid_funnel(result["object_pred"]):
             group_flag = True
             group_start = result["start_seconds"]
@@ -110,6 +117,8 @@ def process_beaker(results: list) -> list[Annotation]:
     group_flag = False
     group_start = 0 
     for result in results:
+        if not result["object_pred"]:
+            continue
         if get_valid_beaker(result["object_pred"]) and not get_valid_funnel(result["object_pred"]):
             group_flag = True
             group_start = result["start_seconds"]

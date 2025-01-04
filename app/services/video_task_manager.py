@@ -32,9 +32,9 @@ def analyze_clip(device_id, clip_path, interval=4, cleanup=True) -> GroupResult:
         results.append(result)
     result = chord(results)(process_results.s())
     
-    if cleanup:
-        # cleanup uploads folder
-        os.remove(mmap_file)
+    # if cleanup:
+    #     # cleanup uploads folder
+    #     os.remove(mmap_file)
     
     return result
     

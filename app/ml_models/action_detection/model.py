@@ -6,7 +6,6 @@ from torch import nn
 from torch.nn import functional as F
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from pytorch_lightning import LightningModule
-from sklearn.metrics import classification_report
 
 class ActionDetectionModel(LightningModule):
     def __init__(self, learning_rate=1e-3, batch_size=6, num_worker=0):
@@ -108,4 +107,3 @@ class ActionDetectionModel(LightningModule):
         label = torch.cat(self.test_step_label).cpu().numpy()
         pred = torch.cat(self.test_step_pred).cpu().numpy()
         pred = np.argmax(pred, axis=1)
-        print(classification_report(label, pred))

@@ -1,0 +1,66 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./compose/local/flask/Dockerfile
+    image: chronovortex07/flask-api
+    container_name: flask-api
+    # command: /start
+    ports:
+      - "5000:5000"
+    environment:
+      DEBUG_MODE: True
+      UPLOAD_FOLDER: /uploads
+      CLEANUP_UPLOADS: False
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_TASK_TRACK_STARTED: True
+      CELERY_TRACK_STARTED: True
+      SOCKETIO_MESSAGE_QUEUE: redis://redis:6379/1
+      VIDEO_JSON_PATH: "/app/videos.json"
+      SECRET_KEY: "secret"
+      ACTION_MODEL_PATH: "/app/app/ml_models/action_detection/weights/model-v1.pth"
+      OBJECT_MODEL_PATH: "/app/app/ml_models/object_detection/weights/obj_detect_best_v5.pt"
+      NVIDIA_DISABLE_REQUIRE: 1
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - ./uploads:/uploads
+    depends_on:
+      - redis
+      - celery-worker
+  celery-worker:
+    build:
+      context: .
+      dockerfile: ./compose/local/celery/worker/Dockerfile
+    image: chronovortex07/celery-worker
+    container_name: celery-worker
+    # command: /start-celeryworker
+    environment:
+      DEBUG_MODE: True
+      UPLOAD_FOLDER: /uploads
+      CLEANUP_UPLOADS: False
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_TASK_TRACK_STARTED: True
+      CELERY_TRACK_STARTED: True
+      SOCKETIO_MESSAGE_QUEUE: redis://redis:6379/1
+      VIDEO_JSON_PATH: "/app/videos.json"
+      SECRET_KEY: "secret"
+      ACTION_MODEL_PATH: "/app/app/ml_models/action_detection/weights/model-v1.pth"
+      OBJECT_MODEL_PATH: "/app/app/ml_models/object_detection/weights/obj_detect_best_v5.pt"
+      NVIDIA_DISABLE_REQUIRE: 1
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]  # Enables GPU support
+    runtime: nvidia  # Required if using older versions of Docker Compose
+    volumes:
+      - ./uploads:/uploads
+    depends_on:
+      - redis
+  redis:
+    image: "redis:bullseye"

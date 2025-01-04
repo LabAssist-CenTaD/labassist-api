@@ -30,11 +30,11 @@ def create_app() -> tuple[SocketIO, Flask]:
     
     celery_app = celery_init_app(app)
     # use pickle as serializer as numpy arrays are not serializable with json
-    celery_app.conf.update(
-        task_serializer='pickle', 
-        result_serializer='pickle',
-        accept_content=['pickle']
-    )
+    # celery_app.conf.update(
+    #     task_serializer='pickle', 
+    #     result_serializer='pickle',
+    #     accept_content=['pickle']
+    # )
     app.extensions['celery','json','application/text'] = celery_app
     
     socketio = SocketIO(app, cors_allowed_origins='*', async_mode='gevent')

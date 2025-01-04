@@ -102,14 +102,15 @@ class VideoJSONManager:
         self.save_json()
         return self.create_patch(old_device_videos, self.video_json['videos'][device_id])
         
-    def add_annotation(self, device_id: str, video_name: str, annotation: Annotation) -> jsonpatch.JsonPatch:
+    def add_annotation(self, device_id: str, video_name: str, annotation: dict | Annotation) -> jsonpatch.JsonPatch:
         if device_id not in self.video_json['videos']:
             return {"message": f"device ID {device_id} not found"}
         elif not any(video["file_name"] == video_name for video in self.video_json['videos'][device_id]):
             return {"message": f"Video {video_name} not found for device {device_id}"}
         old_device_videos = deepcopy(self.get_device_videos(device_id))
         video = next(video for video in self.video_json['videos'][device_id] if video["file_name"] == video_name)
-        annotation = annotation.to_dict()
+        if isinstance(annotation, Annotation):
+            annotation = annotation.to_dict()
         video["annotations"].append(annotation)
         video["status_counts"][annotation['type']] += 1
         self.save_json()
