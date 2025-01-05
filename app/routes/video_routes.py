@@ -142,6 +142,10 @@ def delete_video(clip_name):
             }
         ), 404
     os.remove(current_app.config['UPLOAD_FOLDER'] / device_id / clip_name)
+    try:
+        os.remove(current_app.config['UPLOAD_FOLDER'] / device_id / f'{clip_name}.mmap')
+    except FileNotFoundError:
+        pass
     patch = vjm.remove_video(device_id, clip_name)
     if isinstance(patch, jsonpatch.JsonPatch):
         current_app.extensions['socketio'].emit('patch_frontend', patch.to_string(), room=device_id)

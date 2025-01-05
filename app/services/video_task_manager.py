@@ -1,6 +1,7 @@
 import os
 import cv2
 import mmap
+import gevent
 from flask import current_app
 from celery import chord
 from celery.result import AsyncResult, GroupResult
@@ -30,6 +31,7 @@ def analyze_clip(device_id, clip_path, interval=4, cleanup=True) -> GroupResult:
         end_frame = min(i + int(interval * fps), frame_count)
         result = process_video_clip.s(str(mmap_file), start_frame, end_frame)
         results.append(result)
+        gevent.sleep(0)
     result = chord(results)(process_results.s())
     
     # if cleanup:

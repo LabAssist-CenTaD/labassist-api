@@ -1,3 +1,4 @@
+import jsonpatch
 from copy import deepcopy
 from flask import current_app
 from flask_socketio import emit, join_room, SocketIO
@@ -44,7 +45,7 @@ def init_socketio(socketio_instance: SocketIO) -> None:
             data (dict): A dictionary containing the device ID and the patch to apply.
         """
         device_id = data['device_id']
-        patch = data['patch']
+        patch = jsonpatch.JsonPatch(data['patch'])
         vjm = current_app.extensions['vjm']
         result = vjm.apply_patch(device_id, patch)
         emit('update', {'data': result}, room=device_id)
