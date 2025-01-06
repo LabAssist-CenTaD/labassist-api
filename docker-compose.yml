@@ -1,16 +1,16 @@
 services:
-  # web:
-  #   build:
-  #     context: ../labassist-web/
-  #     dockerfile: ./compose/local/react/Dockerfile
-  #   image: chronovortex07/react-web
-  #   container_name: react-web
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - api
-  #     - redis
-  #     - celery-worker
+  web:
+    build:
+      context: ../labassist-web/
+      dockerfile: ./compose/local/react/Dockerfile
+    image: chronovortex07/react-web
+    container_name: react-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - redis
+      - celery-worker
 
   api:
     build:
