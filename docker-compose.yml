@@ -1,11 +1,23 @@
 services:
+  # web:
+  #   build:
+  #     context: ../labassist-web/
+  #     dockerfile: ./compose/local/react/Dockerfile
+  #   image: chronovortex07/react-web
+  #   container_name: react-web
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - api
+  #     - redis
+  #     - celery-worker
+
   api:
     build:
       context: .
       dockerfile: ./compose/local/flask/Dockerfile
     image: chronovortex07/flask-api
     container_name: flask-api
-    # command: /start
     ports:
       - "5000:5000"
     environment:
@@ -29,13 +41,13 @@ services:
     depends_on:
       - redis
       - celery-worker
+
   celery-worker:
     build:
       context: .
       dockerfile: ./compose/local/celery/worker/Dockerfile
     image: chronovortex07/celery-worker
     container_name: celery-worker
-    # command: /start-celeryworker
     environment:
       DEBUG_MODE: True
       UPLOAD_FOLDER: /uploads
@@ -56,11 +68,12 @@ services:
       resources:
         reservations:
           devices:
-            - capabilities: ["gpu"]  # Enables GPU support
-    runtime: nvidia  # Required if using older versions of Docker Compose
+            - capabilities: ["gpu"]
+    runtime: nvidia
     volumes:
       - ./uploads:/uploads
     depends_on:
       - redis
+
   redis:
     image: "redis:bullseye"

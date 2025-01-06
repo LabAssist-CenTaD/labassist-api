@@ -1,6 +1,0 @@
-#!/bin/bash
-
-set -o errexit
-set -o nounset
-
-celery -A run.celery_app worker --loglevel=info --pool=geventdoc

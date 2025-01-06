@@ -74,7 +74,6 @@ def process_video(clip_name):
     vjm.add_status(device_id, clip_name, 'queued')
     new_device_videos = vjm.get_device_videos(device_id)
     patch = vjm.create_patch(old_device_videos, new_device_videos)
-    print(f'processing patch: {patch}')
     if isinstance(patch, jsonpatch.JsonPatch):
         current_app.extensions['socketio'].emit('patch_frontend', patch.to_string(), room=device_id)
         return jsonify({
