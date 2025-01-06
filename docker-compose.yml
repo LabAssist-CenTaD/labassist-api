@@ -7,6 +7,8 @@ services:
     container_name: react-web
     ports:
       - "3000:3000"
+    environment:
+      VITE_API_ENDPOINT: localhost:5000
     depends_on:
       - api
       - redis
