@@ -8,6 +8,10 @@ from app.services.video_task_manager import analyze_clip, get_task_status
 
 video_routes = Blueprint('video_routes', __name__)
 
+@video_routes.route('/', methods=['GET'])
+def home():
+    return jsonify({'message': 'API is running'})
+
 @video_routes.route('/upload', methods=['POST'])
 def upload_video():
     """Route to upload a video file to the server.

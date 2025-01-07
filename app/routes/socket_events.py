@@ -13,7 +13,7 @@ def init_socketio(socketio_instance: SocketIO) -> None:
 
     @socketio.on('connect')
     def handle_connect():
-        #print('Device connected')
+        print('Device connected')
         emit('message', {'message': 'Connected to server!'})
         
     @socketio.on('disconnect')
