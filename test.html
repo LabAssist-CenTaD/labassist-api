@@ -13,7 +13,7 @@
 <script>
     p = document.getElementById('p');
     // connect to socket io server
-    var socket = io('http://127.0.0.1/socket.io/');
+    var socket = io('localhost');
     socket.on('connect', function() {
         p.innerHTML = 'Connected';
     });
