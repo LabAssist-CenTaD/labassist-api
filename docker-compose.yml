@@ -9,7 +9,7 @@ services:
       - "80:80"
       - "3000:3000"
     environment:
-      VITE_API_ENDPOINT: http://192.168.3.120/api
+      VITE_API_ENDPOINT: http://app.labassist.live:5500/
     depends_on:
       - api
       - redis
