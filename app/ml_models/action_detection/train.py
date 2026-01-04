@@ -21,65 +21,42 @@ torch.set_float32_matmul_precision('medium')
 from model import ActionDetectionModel
 
 
-class VideoDataset(Dataset):
-    """Custom dataset that loads videos from CSV and handles errors"""
-    def __init__(self, csv_path, video_dir, transform=None, clip_duration=2):
-        self.video_dir = Path(video_dir)
-        self.transform = transform
-        
-        # Read CSV and create manifest
-        df = pd.read_csv(csv_path)
-        
-        # Create label mapping
-        unique_labels = sorted(df['label'].unique())
-        self.label_map = {label: idx for idx, label in enumerate(unique_labels)}
-        print(f"Label mapping: {self.label_map}")
-        
-        # Create temporary manifest file for pytorchvideo
-        self.manifest_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt')
-        for _, row in df.iterrows():
-            video_path = self.video_dir / row['video_name']
-            if video_path.exists():
-                label_idx = self.label_map[row['label']]
-                self.manifest_file.write(f"{video_path} {label_idx}\n")
-            else:
-                warnings.warn(f"Video not found: {video_path}")
-        self.manifest_file.close()
-        
-        # Create pytorchvideo dataset
-        self.base_dataset = labeled_video_dataset(
-            self.manifest_file.name,
-            clip_sampler=make_clip_sampler('random', clip_duration),
-            transform=self.transform,
-            decode_audio=False,
-        )
-        
-        # Pre-validate and cache valid items
-        self.valid_items = []
-        self._validate_dataset()
+def create_video_dataset(csv_path, video_dir, transform=None, clip_duration=2):
+    """Create a pytorchvideo dataset from CSV and video directory"""
+    video_dir = Path(video_dir)
     
-    def _validate_dataset(self):
-        """Pre-validate all videos by iterating through the dataset"""
-        print("Validating videos...")
-        iterator = iter(self.base_dataset)
-        idx = 0
-        while True:
-            try:
-                item = next(iterator)
-                self.valid_items.append(item)
-                idx += 1
-            except StopIteration:
-                break
-            except Exception as e:
-                warnings.warn(f"Skipping corrupted video at index {idx}: {str(e)}")
-                idx += 1
-        print(f"Found {len(self.valid_items)} valid videos")
+    # Read CSV and create manifest
+    df = pd.read_csv(csv_path)
     
-    def __len__(self):
-        return len(self.valid_items)
+    # Create label mapping
+    unique_labels = sorted(df['label'].unique())
+    label_map = {label: idx for idx, label in enumerate(unique_labels)}
+    print(f"Label mapping: {label_map}")
     
-    def __getitem__(self, idx):
-        return self.valid_items[idx]
+    # Create temporary manifest file for pytorchvideo
+    manifest_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt')
+    valid_count = 0
+    for _, row in df.iterrows():
+        video_path = video_dir / row['video_name']
+        if video_path.exists():
+            label_idx = label_map[row['label']]
+            manifest_file.write(f"{video_path} {label_idx}\n")
+            valid_count += 1
+        else:
+            warnings.warn(f"Video not found: {video_path}")
+    manifest_file.close()
+    
+    print(f"Loaded {valid_count} videos from manifest")
+    
+    # Create and return pytorchvideo IterableDataset directly
+    dataset = labeled_video_dataset(
+        manifest_file.name,
+        clip_sampler=make_clip_sampler('random', clip_duration),
+        transform=transform,
+        decode_audio=False,
+    )
+    
+    return dataset
 
 
 def create_dataloader(csv_path, video_dir, batch_size=16, num_workers=0, augment=False):
@@ -105,8 +82,9 @@ def create_dataloader(csv_path, video_dir, batch_size=16, num_workers=0, augment
             ])),
         ])
     
-    dataset = VideoDataset(csv_path, video_dir, transform=video_transform)
-    return DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=True, shuffle=True)
+    dataset = create_video_dataset(csv_path, video_dir, transform=video_transform)
+    # For IterableDataset, shuffle must be False in DataLoader
+    return DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=True)
 
 
 if __name__ == '__main__':
