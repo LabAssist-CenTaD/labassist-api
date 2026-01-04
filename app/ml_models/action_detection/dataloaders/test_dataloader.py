@@ -9,6 +9,10 @@ from pytorchvideo.transforms import (
 
 from torchvision.transforms import (
     Compose,
+    RandomHorizontalFlip,
+    RandomGrayscale,
+    RandomAutocontrast,
+    RandomAdjustSharpness,
 )
 
 from torchvision.transforms._transforms_video import (
@@ -18,7 +22,7 @@ from torchvision.transforms._transforms_video import (
 def divide_by_255(video):
     return video / 255.0
 
-class test_dataloader(DataLoader):
+class train_dataloader(DataLoader):
     def __init__(self, dataset_df, batch_size, num_workers):
         video_transform = Compose([
             ApplyTransformToKey(key = 'video',
@@ -26,6 +30,10 @@ class test_dataloader(DataLoader):
                 UniformTemporalSubsample(16),
                 Div255(),
                 NormalizeVideo(mean=[0.45, 0.45, 0.45], std=[0.225, 0.225, 0.225]),
+                # RandomGrayscale(0.1),
+                # RandomAutocontrast(0.5),
+                # RandomAdjustSharpness(0.5),
+                RandomHorizontalFlip(p=0.5),
             ])),
         ])
         dataset = labeled_video_dataset(
