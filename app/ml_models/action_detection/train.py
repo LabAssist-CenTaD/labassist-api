@@ -3,6 +3,7 @@ import pandas as pd
 import tempfile
 import warnings
 from pathlib import Path
+from sklearn.model_selection import train_test_split
 
 import torch
 from pytorch_lightning import seed_everything, Trainer
@@ -89,8 +90,7 @@ def create_dataloader(csv_path, video_dir, batch_size=16, num_workers=0, augment
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train action detection model')
-    parser.add_argument('--train_csv', type=str, required=True, help='Path to training CSV file')
-    parser.add_argument('--val_csv', type=str, default=None, help='Path to validation CSV file (optional)')
+    parser.add_argument('--csv', type=str, required=True, help='Path to CSV file')
     parser.add_argument('--video_dir', type=str, required=True, help='Path to directory containing videos')
     parser.add_argument('--batch_size', type=int, default=16, help='Batch size for training')
     parser.add_argument('--num_workers', type=int, default=0, help='Number of data loading workers')
@@ -100,26 +100,42 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
+    # Load and split data
+    print(f"Loading data from {args.csv}")
+    df = pd.read_csv(args.csv)
+    print(f"Total samples: {len(df)}")
+    
+    # Perform 80/20 train/val split
+    train_df, val_df = train_test_split(df, test_size=0.2, random_state=0, stratify=df['label'])
+    print(f"Train samples: {len(train_df)}, Validation samples: {len(val_df)}")
+    
+    # Create temporary CSV files for train and val
+    train_csv = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv')
+    train_df.to_csv(train_csv.name, index=False)
+    train_csv.close()
+    
+    val_csv = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv')
+    val_df.to_csv(val_csv.name, index=False)
+    val_csv.close()
+    
     # Create dataloaders
-    print(f"Loading training data from {args.train_csv}")
+    print("Creating training dataloader...")
     train_loader = create_dataloader(
-        args.train_csv, 
+        train_csv.name, 
         args.video_dir, 
         batch_size=args.batch_size, 
         num_workers=args.num_workers,
         augment=True
     )
     
-    val_loader = None
-    if args.val_csv:
-        print(f"Loading validation data from {args.val_csv}")
-        val_loader = create_dataloader(
-            args.val_csv, 
-            args.video_dir, 
-            batch_size=args.batch_size, 
-            num_workers=args.num_workers,
-            augment=False
-        )
+    print("Creating validation dataloader...")
+    val_loader = create_dataloader(
+        val_csv.name, 
+        args.video_dir, 
+        batch_size=args.batch_size, 
+        num_workers=args.num_workers,
+        augment=False
+    )
     
     # Initialize model
     model = ActionDetectionModel(
