@@ -300,14 +300,14 @@ def main():
     parser.add_argument(
         '--output_dir',
         type=str,
-        default='data/augmented',
-        help='Directory to save augmented videos (default: data/augmented)'
+        default=None,
+        help='Directory to save augmented videos (default: {video_dir}-augmented)'
     )
     parser.add_argument(
         '--output_csv',
         type=str,
-        default='data/augmented-labels.csv',
-        help='Path to save the augmented dataset CSV (default: data/augmented-labels.csv)'
+        default=None,
+        help='Path to save the augmented dataset CSV (default: {csv}-augmented.csv)'
     )
     parser.add_argument(
         '--target_videos_per_label',
@@ -323,6 +323,14 @@ def main():
     )
     
     args = parser.parse_args()
+    
+    # Set default output paths based on input paths
+    if args.output_dir is None:
+        args.output_dir = f"{args.video_dir}-augmented"
+    
+    if args.output_csv is None:
+        csv_path = Path(args.csv)
+        args.output_csv = str(csv_path.parent / f"{csv_path.stem}-augmented{csv_path.suffix}")
     
     print("=" * 60)
     print("Video Dataset Augmentation (Class Balancing)")
