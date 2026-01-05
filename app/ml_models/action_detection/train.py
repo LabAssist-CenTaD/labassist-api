@@ -144,9 +144,6 @@ if __name__ == '__main__':
         num_worker=args.num_workers
     )
     
-    # Setup callbacks
-    lr_monitor = LearningRateMonitor(logging_interval='epoch')
-    
     # Detect device and setup trainer
     if torch.cuda.is_available():
         print("Training on GPU")
@@ -167,7 +164,6 @@ if __name__ == '__main__':
         accumulate_grad_batches=2,
         enable_progress_bar=True,
         num_sanity_val_steps=0,
-        callbacks=[lr_monitor],
         logger=False,  # Disable CSV logger to avoid I/O errors on flaky storage
     )
     
