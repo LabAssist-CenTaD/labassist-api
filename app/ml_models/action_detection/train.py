@@ -22,33 +22,6 @@ torch.set_float32_matmul_precision('medium')
 from model import ActionDetectionModel
 
 
-class IterableToMapDataset(Dataset):
-    """
-    Wrapper that converts an IterableDataset to a map-style Dataset by 
-    pre-loading all items. This allows DataLoader to know the length,
-    enabling tqdm to show proper progress bars.
-    """
-    def __init__(self, iterable_dataset):
-        self.items = []
-        print("Pre-loading dataset items for proper progress tracking...")
-        iterator = iter(iterable_dataset)
-        while True:
-            try:
-                item = next(iterator)
-                self.items.append(item)
-            except StopIteration:
-                break
-            except (RuntimeError, Exception) as e:
-                warnings.warn(f"Skipping corrupted video: {str(e)}")
-        print(f"Loaded {len(self.items)} valid video clips")
-    
-    def __len__(self):
-        return len(self.items)
-    
-    def __getitem__(self, idx):
-        return self.items[idx]
-
-
 def create_video_dataset(csv_path, video_dir, transform=None, clip_duration=2):
     """Create a pytorchvideo dataset from CSV and video directory"""
     video_dir = Path(video_dir)
@@ -76,16 +49,13 @@ def create_video_dataset(csv_path, video_dir, transform=None, clip_duration=2):
     
     print(f"Loaded {valid_count} videos from manifest")
     
-    # Create pytorchvideo IterableDataset
-    iterable_dataset = labeled_video_dataset(
+    # Create and return pytorchvideo IterableDataset directly
+    dataset = labeled_video_dataset(
         manifest_file.name,
         clip_sampler=make_clip_sampler('random', clip_duration),
         transform=transform,
         decode_audio=False,
     )
-    
-    # Convert to map-style dataset for proper progress bar support
-    dataset = IterableToMapDataset(iterable_dataset)
     
     return dataset
 
@@ -114,8 +84,8 @@ def create_dataloader(csv_path, video_dir, batch_size=16, num_workers=0, augment
         ])
     
     dataset = create_video_dataset(csv_path, video_dir, transform=video_transform)
-    # Now using map-style dataset, so shuffle is supported
-    return DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=True, shuffle=augment)
+    # For IterableDataset, shuffle must be False in DataLoader
+    return DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=True)
 
 
 if __name__ == '__main__':
