@@ -82,6 +82,9 @@ class ActionDetectionModel(LightningModule):
         avg_loss = torch.stack(self.validation_step_loss).mean().cpu().numpy().round(2)
         avg_metric = torch.stack(self.validation_step_metric).mean().cpu().numpy().round(2)
         
+        # Ensure checkpoint directory exists
+        os.makedirs('checkpoints/best', exist_ok=True)
+        
         # if avg_metric more than metric in checkpoints/best/epoch=xx-acc=xx.ckpt, save checkpoint
         dir = os.listdir('checkpoints/best')
         if len(dir) > 0:
