@@ -168,6 +168,7 @@ if __name__ == '__main__':
         enable_progress_bar=True,
         num_sanity_val_steps=0,
         callbacks=[lr_monitor],
+        logger=False,  # Disable CSV logger to avoid I/O errors on flaky storage
     )
     
     # Train the model
