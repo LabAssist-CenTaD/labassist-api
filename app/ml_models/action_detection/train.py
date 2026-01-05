@@ -57,7 +57,20 @@ def create_video_dataset(csv_path, video_dir, transform=None, clip_duration=2):
         decode_audio=False,
     )
     
-    return dataset
+    return dataset, valid_count
+
+
+class IterableDatasetWrapper:
+    """Wrapper to add __len__ to IterableDataset for progress bars"""
+    def __init__(self, iterable_dataset, length):
+        self.iterable_dataset = iterable_dataset
+        self.length = length
+    
+    def __iter__(self):
+        return iter(self.iterable_dataset)
+    
+    def __len__(self):
+        return self.length
 
 
 def create_dataloader(csv_path, video_dir, batch_size=16, num_workers=0, augment=False):
@@ -83,9 +96,11 @@ def create_dataloader(csv_path, video_dir, batch_size=16, num_workers=0, augment
             ])),
         ])
     
-    dataset = create_video_dataset(csv_path, video_dir, transform=video_transform)
+    dataset, dataset_size = create_video_dataset(csv_path, video_dir, transform=video_transform)
+    # Wrap the IterableDataset to give it a length for progress bars
+    wrapped_dataset = IterableDatasetWrapper(dataset, dataset_size)
     # For IterableDataset, shuffle must be False in DataLoader
-    return DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=True)
+    return DataLoader(wrapped_dataset, batch_size=batch_size, num_workers=num_workers, pin_memory=True)
 
 
 if __name__ == '__main__':
